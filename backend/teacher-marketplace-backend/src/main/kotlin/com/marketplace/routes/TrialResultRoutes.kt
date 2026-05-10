@@ -113,13 +113,13 @@ fun Application.trialResultRoutes() {
                         slotDate    = booking.slotDate
                     )
 
-                    // Teacher always gets a record — happy: full amount, unhappy: £0
+                    // Teacher always gets paid regardless of happy/unhappy
                     ledgerRepository.save(
                         id          = UUID.randomUUID().toString(),
                         userId      = request.teacherId,
                         role        = "TEACHER",
                         type        = "CREDIT",
-                        amount      = if (request.happy) amount else 0.0,
+                        amount      = amount,
                         happy       = request.happy,
                         bookingId   = request.bookingId,
                         studentName = studentName,
@@ -142,20 +142,6 @@ fun Application.trialResultRoutes() {
                             contactService.acceptContactByStudentAndTeacher(studentId, request.teacherId)
                             contactUnlocked = true
                         }
-                    } else {
-                        // Unhappy — platform gets the money
-                        ledgerRepository.save(
-                            id          = UUID.randomUUID().toString(),
-                            userId      = "platform",
-                            role        = "PLATFORM",
-                            type        = "CREDIT",
-                            amount      = amount,
-                            happy       = false,
-                            bookingId   = request.bookingId,
-                            studentName = studentName,
-                            teacherName = booking.teacherName,
-                            slotDate    = booking.slotDate
-                        )
                     }
 
                     call.respond(
