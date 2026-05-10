@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Gradle caches and build output
+**/.gradle/
+**/build/
+*.iml
+local.properties
+
+# IDE
+**/.idea/
+
+# Credentials — never commit these
+**/google-services.json
+**/firebase-service-account.json
+
+# Claude worktrees
+**/.claude/worktrees/
+
+# Combined output scratch file
+**/combined_output.txt

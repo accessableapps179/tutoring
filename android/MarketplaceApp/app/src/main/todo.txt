@@ -1,0 +1,35 @@
+
+
+-teacher fields,
+    photo
+
+ -student profile
+   - avatar
+
+  -search
+availability
+
+-booking
+rules, 30 min slots, templates, expectations ,
+do i have to confirm all bookings?
+
+
+-pending
+when a student books a slots it turns red whether its confirmed or not,
+question: what do you see when teacher declines, confirm, does it turn available again?
+
+-declined?
+
+
+The DECLINED state needs its own UI state —
+ currently else catches both "no contact" and
+ "DECLINED", showing "Send Contact Request"
+ for both. A declined student should either
+ see a message explaining it, or be allowed
+ to re-request.
+========================================
+git add .
+git commit -m "Marketplace: remove incoming bookings from teacher"
+git push
+
+

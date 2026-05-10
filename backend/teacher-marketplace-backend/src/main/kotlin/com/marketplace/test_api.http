@@ -1,0 +1,16 @@
+### Create a Teacher
+POST http://localhost:8080/teachers
+Content-Type: application/json
+
+{
+  "id": "t1",
+  "name": "Jane Smith",
+  "hourlyRate": 45.0,
+  "aboutMe": "I have been teaching mathematics for over ten years in various schools."
+}
+
+### Get All Teachers
+GET http://localhost:8080/teachers
+
+### Get Specific Teacher
+GET http://localhost:8080/teachers/t1

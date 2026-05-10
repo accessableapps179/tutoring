@@ -1,0 +1,58 @@
+package com.marketplace.dto
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class WeeklySlotDto(
+    val id: String,
+    val teacherId: String,
+    val dayOfWeek: Int,
+    val hour: Double
+)
+
+@Serializable
+data class AvailableSlotDto(
+    val date: String,
+    val hour: Double,
+    val isBooked: Boolean
+)
+
+@Serializable
+data class TeacherHourRangeDto(
+    val id: String,
+    val teacherId: String,
+    val startHour: Int,
+    val endHour: Int
+)
+
+@Serializable
+data class ToggleWeeklySlotRequest(
+    val dayOfWeek: Int,
+    val hour: Double
+)
+
+@Serializable
+data class ToggleOverrideRequest(
+    val date: String,
+    val hour: Double
+)
+
+@Serializable
+data class HourRangeRequest(
+    val startHour: Int,
+    val endHour: Int
+)
+
+@Serializable
+data class ToggleResponse(
+    val isAvailable: Boolean
+)
+
+@Serializable
+data class TeacherSlotStatusDto(
+    val date: String,
+    val hour: Double,
+    val status: String,        // UNAVAILABLE, AVAILABLE, PENDING, CONFIRMED
+    val bookingId: String? = null,
+    val studentName: String? = null
+)
