@@ -14,6 +14,8 @@ object LedgerTable : IdTable<String>("ledger") {
     val bookingId    = varchar("booking_id", 50)
     val studentName  = varchar("student_name", 255)
     val teacherName  = varchar("teacher_name", 255)
-    val slotDate     = varchar("slot_date", 20)
-    val timestamp    = long("timestamp")
+    val slotDate          = varchar("slot_date", 20)
+    val timestamp         = long("timestamp")
+    val lessonAmount      = double("lesson_amount").nullable()
+    val commissionPercent = double("commission_percent").nullable()
 }

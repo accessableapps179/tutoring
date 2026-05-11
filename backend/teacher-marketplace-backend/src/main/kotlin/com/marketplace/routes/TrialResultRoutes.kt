@@ -3,10 +3,10 @@
 package com.marketplace.routes
 
 import com.marketplace.repository.BookingRepository
-import com.marketplace.repository.LedgerRepository
 import com.marketplace.repository.TeacherRepository
 import com.marketplace.repository.TrialResultRepository
 import com.marketplace.service.ContactService
+import com.marketplace.service.PaymentService
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -46,7 +46,7 @@ fun Application.trialResultRoutes() {
     val trialResultRepository = TrialResultRepository()
     val bookingRepository     = BookingRepository()
     val contactService        = ContactService()
-    val ledgerRepository      = LedgerRepository()
+    val paymentService        = PaymentService()
     val teacherRepository     = TeacherRepository()
 
     routing {
@@ -96,35 +96,18 @@ fun Application.trialResultRoutes() {
 
                     bookingRepository.updateStatus(request.bookingId, "CANCELLED")
 
-                    val teacher = teacherRepository.findById(request.teacherId)
-                    val amount  = (teacher?.hourlyRate ?: 0.0) / 2.0
+                    val teacher     = teacherRepository.findById(request.teacherId)
+                    val lessonAmount = (teacher?.hourlyRate ?: 0.0) / 2.0
 
-                    // Student always pays the full lesson cost
-                    ledgerRepository.save(
-                        id          = UUID.randomUUID().toString(),
-                        userId      = studentId,
-                        role        = "STUDENT",
-                        type        = "DEBIT",
-                        amount      = amount,
-                        happy       = request.happy,
-                        bookingId   = request.bookingId,
-                        studentName = studentName,
-                        teacherName = booking.teacherName,
-                        slotDate    = booking.slotDate
-                    )
-
-                    // Teacher always gets paid regardless of happy/unhappy
-                    ledgerRepository.save(
-                        id          = UUID.randomUUID().toString(),
-                        userId      = request.teacherId,
-                        role        = "TEACHER",
-                        type        = "CREDIT",
-                        amount      = amount,
-                        happy       = request.happy,
-                        bookingId   = request.bookingId,
-                        studentName = studentName,
-                        teacherName = booking.teacherName,
-                        slotDate    = booking.slotDate
+                    paymentService.processTrialPayment(
+                        lessonAmount = lessonAmount,
+                        studentId    = studentId,
+                        teacherId    = request.teacherId,
+                        bookingId    = request.bookingId,
+                        studentName  = studentName,
+                        teacherName  = booking.teacherName,
+                        slotDate     = booking.slotDate,
+                        happy        = request.happy
                     )
 
                     var contactUnlocked = false

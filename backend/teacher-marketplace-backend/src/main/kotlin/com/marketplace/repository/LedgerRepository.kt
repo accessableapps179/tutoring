@@ -20,7 +20,9 @@ class LedgerRepository {
         val studentName: String,
         val teacherName: String,
         val slotDate: String,
-        val timestamp: Long
+        val timestamp: Long,
+        val lessonAmount: Double? = null,
+        val commissionPercent: Double? = null
     )
 
     fun save(
@@ -33,34 +35,40 @@ class LedgerRepository {
         bookingId: String,
         studentName: String,
         teacherName: String,
-        slotDate: String
+        slotDate: String,
+        lessonAmount: Double? = null,
+        commissionPercent: Double? = null
     ): LedgerEntry = transaction {
         val now = System.currentTimeMillis()
         LedgerTable.insert {
-            it[LedgerTable.id]          = id
-            it[LedgerTable.userId]      = userId
-            it[LedgerTable.role]        = role
-            it[LedgerTable.type]        = type
-            it[LedgerTable.amount]      = amount
-            it[LedgerTable.happy]       = happy
-            it[LedgerTable.bookingId]   = bookingId
-            it[LedgerTable.studentName] = studentName
-            it[LedgerTable.teacherName] = teacherName
-            it[LedgerTable.slotDate]    = slotDate
-            it[LedgerTable.timestamp]   = now
+            it[LedgerTable.id]                = id
+            it[LedgerTable.userId]            = userId
+            it[LedgerTable.role]              = role
+            it[LedgerTable.type]              = type
+            it[LedgerTable.amount]            = amount
+            it[LedgerTable.happy]             = happy
+            it[LedgerTable.bookingId]         = bookingId
+            it[LedgerTable.studentName]       = studentName
+            it[LedgerTable.teacherName]       = teacherName
+            it[LedgerTable.slotDate]          = slotDate
+            it[LedgerTable.timestamp]         = now
+            it[LedgerTable.lessonAmount]      = lessonAmount
+            it[LedgerTable.commissionPercent] = commissionPercent
         }
         LedgerEntry(
-            id          = id,
-            userId      = userId,
-            role        = role,
-            type        = type,
-            amount      = amount,
-            happy       = happy,
-            bookingId   = bookingId,
-            studentName = studentName,
-            teacherName = teacherName,
-            slotDate    = slotDate,
-            timestamp   = now
+            id                = id,
+            userId            = userId,
+            role              = role,
+            type              = type,
+            amount            = amount,
+            happy             = happy,
+            bookingId         = bookingId,
+            studentName       = studentName,
+            teacherName       = teacherName,
+            slotDate          = slotDate,
+            timestamp         = now,
+            lessonAmount      = lessonAmount,
+            commissionPercent = commissionPercent
         )
     }
 
@@ -80,17 +88,19 @@ class LedgerRepository {
 
     private fun mapRow(row: ResultRow): LedgerEntry {
         return LedgerEntry(
-            id          = row[LedgerTable.id].value,
-            userId      = row[LedgerTable.userId],
-            role        = row[LedgerTable.role],
-            type        = row[LedgerTable.type],
-            amount      = row[LedgerTable.amount],
-            happy       = row[LedgerTable.happy],
-            bookingId   = row[LedgerTable.bookingId],
-            studentName = row[LedgerTable.studentName],
-            teacherName = row[LedgerTable.teacherName],
-            slotDate    = row[LedgerTable.slotDate],
-            timestamp   = row[LedgerTable.timestamp]
+            id                = row[LedgerTable.id].value,
+            userId            = row[LedgerTable.userId],
+            role              = row[LedgerTable.role],
+            type              = row[LedgerTable.type],
+            amount            = row[LedgerTable.amount],
+            happy             = row[LedgerTable.happy],
+            bookingId         = row[LedgerTable.bookingId],
+            studentName       = row[LedgerTable.studentName],
+            teacherName       = row[LedgerTable.teacherName],
+            slotDate          = row[LedgerTable.slotDate],
+            timestamp         = row[LedgerTable.timestamp],
+            lessonAmount      = row[LedgerTable.lessonAmount],
+            commissionPercent = row[LedgerTable.commissionPercent]
         )
     }
 }

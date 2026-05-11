@@ -4,6 +4,7 @@ package com.marketplace
 
 import com.marketplace.infrastructure.DatabaseFactory
 import com.marketplace.infrastructure.configureJwt
+import com.marketplace.routes.adminSettingsRoutes
 import com.marketplace.routes.authRoutes
 import com.marketplace.routes.availabilityRoutes
 import com.marketplace.routes.bookingRoutes
@@ -64,4 +65,5 @@ fun Application.module() {
     paymentCardRoutes()
     trialResultRoutes()
     ledgerRoutes()
+    adminSettingsRoutes()
 }

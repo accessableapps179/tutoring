@@ -14,10 +14,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -26,6 +29,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -41,6 +45,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -56,12 +62,18 @@ fun AdminScreen(
     onBackClick: () -> Unit,
     adminViewModel: AdminViewModel = viewModel()
 ) {
-    val platformLedger by adminViewModel.platformLedger.collectAsState()
-    val isLoading by adminViewModel.isLoading.collectAsState()
-    val errorMessage by adminViewModel.errorMessage.collectAsState()
+    val platformLedger  by adminViewModel.platformLedger.collectAsState()
+    val commissionRate  by adminViewModel.commissionRate.collectAsState()
+    val isLoading       by adminViewModel.isLoading.collectAsState()
+    val errorMessage    by adminViewModel.errorMessage.collectAsState()
+    val saveSuccess     by adminViewModel.saveSuccess.collectAsState()
 
     LaunchedEffect(Unit) {
         adminViewModel.loadPlatformLedger()
+    }
+
+    LaunchedEffect(saveSuccess) {
+        if (saveSuccess) adminViewModel.clearSaveSuccess()
     }
 
     Scaffold(
@@ -69,7 +81,7 @@ fun AdminScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "⚙️ Admin Panel",
+                        text = "Admin Panel",
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -111,9 +123,7 @@ fun AdminScreen(
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFF37474F)
-                                ),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF37474F)),
                                 elevation = CardDefaults.cardElevation(4.dp)
                             ) {
                                 Column(
@@ -133,7 +143,7 @@ fun AdminScreen(
                                         color = Color.White
                                     )
                                     Text(
-                                        text = "Collected from unhappy trial lessons",
+                                        text = "Commission collected from all trial lessons",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = Color.White.copy(alpha = 0.6f)
                                     )
@@ -141,9 +151,17 @@ fun AdminScreen(
                             }
                         }
 
+                        // Commission rate card
+                        item {
+                            CommissionRateCard(
+                                currentRate = commissionRate,
+                                onSave      = { rate -> adminViewModel.updateCommissionRate(rate) }
+                            )
+                        }
+
                         item {
                             Text(
-                                text = "Unhappy Trial History",
+                                text = "Commission History",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(top = 8.dp)
@@ -171,8 +189,102 @@ fun AdminScreen(
 }
 
 @Composable
+private fun CommissionRateCard(
+    currentRate: Double?,
+    onSave: (Double) -> Unit
+) {
+    var editing     by remember { mutableStateOf(false) }
+    var inputValue  by remember(currentRate) { mutableStateOf(currentRate?.let { "%.1f".format(it) } ?: "") }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Commission Rate",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            if (!editing) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (currentRate != null) "${"%.1f".format(currentRate)}%" else "Loading…",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF37474F)
+                    )
+                    Button(onClick = { editing = true }) {
+                        Text("Edit")
+                    }
+                }
+                Text(
+                    text = "Deducted from every lesson before crediting teacher",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            } else {
+                OutlinedTextField(
+                    value = inputValue,
+                    onValueChange = { inputValue = it },
+                    label = { Text("Commission %") },
+                    suffix = { Text("%") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            val rate = inputValue.toDoubleOrNull()
+                            if (rate != null && rate in 0.0..100.0) {
+                                onSave(rate)
+                                editing = false
+                            }
+                        }
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = {
+                            val rate = inputValue.toDoubleOrNull()
+                            if (rate != null && rate in 0.0..100.0) {
+                                onSave(rate)
+                                editing = false
+                            }
+                        }
+                    ) {
+                        Text("Save")
+                    }
+                    Button(
+                        onClick = {
+                            inputValue = currentRate?.let { "%.1f".format(it) } ?: ""
+                            editing = false
+                        }
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun AdminTransactionRow(tx: LedgerEntryDto) {
     var expanded by remember { mutableStateOf(false) }
+
+    val emoji = if (tx.happy) "✅" else "❌"
+    val label = if (tx.happy) "Commission — happy trial" else "Commission — unhappy trial"
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -195,10 +307,10 @@ fun AdminTransactionRow(tx: LedgerEntryDto) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(text = "❌", fontSize = 18.sp)
+                    Text(text = emoji, fontSize = 18.sp)
                     Column {
                         Text(
-                            text = "Unhappy trial — platform fee",
+                            text = label,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -233,16 +345,31 @@ fun AdminTransactionRow(tx: LedgerEntryDto) {
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     HorizontalDivider()
-                    LedgerDetailRow(label = "Student",         value = tx.studentName)
-                    LedgerDetailRow(label = "Teacher",         value = tx.teacherName)
-                    LedgerDetailRow(label = "Lesson date",     value = tx.slotDate)
+                    LedgerDetailRow(label = "Student",        value = tx.studentName)
+                    LedgerDetailRow(label = "Teacher",        value = tx.teacherName)
+                    LedgerDetailRow(label = "Lesson date",    value = tx.slotDate)
                     LedgerDetailRow(
                         label = "Recorded",
                         value = SimpleDateFormat("d MMM yyyy, HH:mm", Locale.getDefault())
                             .format(Date(tx.timestamp))
                     )
-                    LedgerDetailRow(label = "Booking ref",     value = tx.bookingId)
-                    LedgerDetailRow(label = "Amount collected", value = "£${"%.2f".format(tx.amount)}")
+                    LedgerDetailRow(label = "Booking ref",    value = tx.bookingId)
+                    if (tx.lessonAmount != null && tx.commissionPercent != null) {
+                        LedgerDetailRow(
+                            label = "Lesson amount",
+                            value = "£${"%.2f".format(tx.lessonAmount)}"
+                        )
+                        LedgerDetailRow(
+                            label = "Commission rate",
+                            value = "${"%.1f".format(tx.commissionPercent)}%"
+                        )
+                        LedgerDetailRow(
+                            label = "Platform earned",
+                            value = "£${"%.2f".format(tx.amount)}  (${"%.1f".format(tx.commissionPercent)}% of £${"%.2f".format(tx.lessonAmount)})"
+                        )
+                    } else {
+                        LedgerDetailRow(label = "Platform earned", value = "£${"%.2f".format(tx.amount)}")
+                    }
                 }
             }
         }

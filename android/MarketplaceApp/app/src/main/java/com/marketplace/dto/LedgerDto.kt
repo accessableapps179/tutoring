@@ -14,7 +14,9 @@ data class LedgerEntryDto(
     val studentName: String,
     val teacherName: String,
     val slotDate: String,
-    val timestamp: Long
+    val timestamp: Long,
+    val lessonAmount: Double? = null,
+    val commissionPercent: Double? = null
 )
 
 @Serializable

@@ -21,7 +21,9 @@ data class LedgerEntryResponse(
     val studentName: String,
     val teacherName: String,
     val slotDate: String,
-    val timestamp: Long
+    val timestamp: Long,
+    val lessonAmount: Double? = null,
+    val commissionPercent: Double? = null
 )
 
 @Serializable
@@ -62,13 +64,15 @@ fun Application.ledgerRoutes() {
 }
 
 private fun LedgerRepository.LedgerEntry.toResponse() = LedgerEntryResponse(
-    id          = id,
-    type        = type,
-    amount      = amount,
-    happy       = happy,
-    bookingId   = bookingId,
-    studentName = studentName,
-    teacherName = teacherName,
-    slotDate    = slotDate,
-    timestamp   = timestamp
+    id                = id,
+    type              = type,
+    amount            = amount,
+    happy             = happy,
+    bookingId         = bookingId,
+    studentName       = studentName,
+    teacherName       = teacherName,
+    slotDate          = slotDate,
+    timestamp         = timestamp,
+    lessonAmount      = lessonAmount,
+    commissionPercent = commissionPercent
 )

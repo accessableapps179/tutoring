@@ -9,6 +9,7 @@ import com.marketplace.repository.FcmTokenTable
 import com.marketplace.repository.LedgerTable
 import com.marketplace.repository.MessageTable
 import com.marketplace.repository.PaymentCardTable
+import com.marketplace.repository.PlatformSettingsTable
 import com.marketplace.repository.TeacherHourRangeTable
 import com.marketplace.repository.TeacherTable
 import com.marketplace.repository.TrialResultTable
@@ -42,6 +43,7 @@ object DatabaseFactory {
             FcmTokenTable,
             TrialResultTable,
             LedgerTable,
+            PlatformSettingsTable,
             UserTable,
             TeacherTable
         )
@@ -61,7 +63,8 @@ object DatabaseFactory {
             PaymentCardTable,
             FcmTokenTable,
             TrialResultTable,
-            LedgerTable
+            LedgerTable,
+            PlatformSettingsTable
         )
         SchemaUtils.createMissingTablesAndColumns(
             TeacherTable,
@@ -75,7 +78,8 @@ object DatabaseFactory {
             PaymentCardTable,
             FcmTokenTable,
             TrialResultTable,
-            LedgerTable
+            LedgerTable,
+            PlatformSettingsTable
         )
     }
 }
