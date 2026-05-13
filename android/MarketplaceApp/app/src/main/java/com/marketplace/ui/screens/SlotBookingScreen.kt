@@ -337,6 +337,10 @@ fun SlotBookingScreen(
                                 val secondSlot = rowSlots[secondIdx]
                                 val secondCanShift = !secondSlot.isBooked &&
                                         (secondSlot.hour + 0.5) in freeHours
+                                // second chip inherits its own pre-selection colour:
+                                // if it was light green (can't start a double) → light blue
+                                // if it was full green (can start a double) → solid blue
+                                val secondIsLightBlue = (secondSlot.hour + 0.5) !in freeHours
                                 Box(
                                     modifier = Modifier
                                         .weight(2f)
@@ -356,7 +360,7 @@ fun SlotBookingScreen(
                                         DoubleChipInner(
                                             time = formatSlotTime(secondSlot.hour),
                                             isSelected = true,
-                                            isSecondChip = secondCanShift,
+                                            isSecondChip = secondIsLightBlue,
                                             modifier = Modifier.weight(1f).height(44.dp),
                                             onClick = if (secondCanShift) {
                                                 { availabilityViewModel.selectSlot(secondSlot) }
@@ -386,7 +390,7 @@ fun SlotBookingScreen(
                                 rowSlots.forEach { slot ->
                                     val isSelectedChip = slot.hour == selectedFirstHour || slot.hour == selectedSecondHour
                                     val isSecond = slot.hour == selectedSecondHour &&
-                                            (slot.hour + 0.5) in freeHours
+                                            (slot.hour + 0.5) !in freeHours
                                     DoubleChip(
                                         slot = slot,
                                         isSelected = isSelectedChip,
