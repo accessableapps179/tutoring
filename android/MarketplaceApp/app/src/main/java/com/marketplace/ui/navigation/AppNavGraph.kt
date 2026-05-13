@@ -259,17 +259,9 @@ fun AppNavGraph() {
                 studentName = Session.name,
                 onBackClick = rememberSingleClick { navController.popBackStack() },
                 onBookingSuccess = {
-                    val contactId = Session.pendingContactId
-                    if (contactId.isNotEmpty()) {
-                        Session.pendingContactId = ""
-                        Session.pendingCallName = Session.pendingTeacherName
-                        navController.navigate("chat/$contactId/${Session.userId}") {
-                            popUpTo("book_teacher/$teacherId") { inclusive = true }
-                        }
-                    } else {
-                        navController.navigate("booking_success") {
-                            popUpTo("book_teacher/$teacherId") { inclusive = true }
-                        }
+                    Session.pendingContactId = ""
+                    navController.navigate("booking_success") {
+                        popUpTo("book_teacher/$teacherId") { inclusive = true }
                     }
                 }
             )
