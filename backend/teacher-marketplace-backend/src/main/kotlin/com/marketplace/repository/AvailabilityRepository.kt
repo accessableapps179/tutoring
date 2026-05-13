@@ -134,25 +134,23 @@ class AvailabilityRepository {
     // ─── Stamp (bulk, single transaction) ───────────────────
 
     fun stampOverrides(
-        teacherId: String,
+        tid: String,
         dates: List<String>,
         newOverrides: List<AvailabilityOverride>
     ) = transaction {
-        // Delete all existing overrides for the month in one go
         for (date in dates) {
             AvailabilityOverrideTable.deleteWhere {
-                (AvailabilityOverrideTable.teacherId eq teacherId) and
-                (AvailabilityOverrideTable.date eq date)
+                (AvailabilityOverrideTable.teacherId eq tid) and
+                (AvailabilityOverrideTable.date      eq date)
             }
         }
-        // Insert all new overrides in the same transaction
         for (o in newOverrides) {
             AvailabilityOverrideTable.insert {
-                it[id]          = o.id
-                it[teacherId]   = o.teacherId
-                it[date]        = o.date
-                it[hour]        = o.hour
-                it[isAvailable] = o.isAvailable
+                it[AvailabilityOverrideTable.id]          = o.id
+                it[AvailabilityOverrideTable.teacherId]   = o.teacherId
+                it[AvailabilityOverrideTable.date]        = o.date
+                it[AvailabilityOverrideTable.hour]        = o.hour
+                it[AvailabilityOverrideTable.isAvailable] = o.isAvailable
             }
         }
     }

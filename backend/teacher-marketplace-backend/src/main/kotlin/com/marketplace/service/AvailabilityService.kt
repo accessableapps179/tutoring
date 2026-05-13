@@ -331,7 +331,7 @@ class AvailabilityService(
         // Bookings show as CONFIRMED/PENDING regardless of overrides, so deleting
         // their overrides is safe — the booking status takes priority in getTeacherDayView
         availabilityRepository.stampOverrides(
-            teacherId    = teacherId,
+            tid          = teacherId,
             dates        = allDates,
             newOverrides = newOverrides
         )
