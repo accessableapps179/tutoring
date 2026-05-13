@@ -356,7 +356,7 @@ fun SlotBookingScreen(
                                         DoubleChipInner(
                                             time = formatSlotTime(secondSlot.hour),
                                             isSelected = true,
-                                            isSecondChip = true,
+                                            isSecondChip = secondCanShift,
                                             modifier = Modifier.weight(1f).height(44.dp),
                                             onClick = if (secondCanShift) {
                                                 { availabilityViewModel.selectSlot(secondSlot) }
@@ -385,7 +385,8 @@ fun SlotBookingScreen(
                             ) {
                                 rowSlots.forEach { slot ->
                                     val isSelectedChip = slot.hour == selectedFirstHour || slot.hour == selectedSecondHour
-                                    val isSecond = slot.hour == selectedSecondHour
+                                    val isSecond = slot.hour == selectedSecondHour &&
+                                            (slot.hour + 0.5) in freeHours
                                     DoubleChip(
                                         slot = slot,
                                         isSelected = isSelectedChip,
