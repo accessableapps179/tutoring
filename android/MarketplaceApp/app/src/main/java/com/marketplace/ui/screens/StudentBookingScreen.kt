@@ -289,7 +289,7 @@ fun UpcomingBookingCard(
                 onClick = {
                     val teacherDisplayName = booking.teacherName.ifBlank { "Teacher" }
                     if (acceptedContact != null) {
-                        onStartRegularCall(acceptedContact.id, teacherDisplayName)
+                        onStartRegularCall(booking.id, teacherDisplayName)
                     } else {
                         onStartVideoCall(booking.id, teacherDisplayName, booking.id, booking.teacherId)
                     }
