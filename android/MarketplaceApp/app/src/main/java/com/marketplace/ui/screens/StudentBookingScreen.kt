@@ -41,8 +41,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.marketplace.dto.BookingDto
+import com.marketplace.dto.ContactDto
 import com.marketplace.viewmodel.BookingViewModel
+import com.marketplace.viewmodel.ContactViewModel
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
@@ -52,14 +55,25 @@ import java.util.Locale
 fun StudentBookingScreen(
     onBackClick: () -> Unit,
     onStartVideoCall: (contactId: String, otherPersonName: String, bookingId: String, teacherId: String) -> Unit,
-    bookingViewModel: BookingViewModel = viewModel()
+    onStartRegularCall: (contactId: String, otherPersonName: String) -> Unit,
+    bookingViewModel: BookingViewModel = viewModel(),
+    contactViewModel: ContactViewModel = viewModel()
 ) {
     val upcomingBookings by bookingViewModel.upcomingBookings.collectAsState()
     val isLoading by bookingViewModel.isLoading.collectAsState()
     val errorMessage by bookingViewModel.errorMessage.collectAsState()
+    val contacts by contactViewModel.contacts.collectAsState()
 
     LaunchedEffect(Unit) {
         bookingViewModel.loadUpcomingBookings()
+        contactViewModel.loadContacts()
+    }
+
+    // Fix 4: hide today's bookings whose slot has already ended
+    val today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+    val currentHour = LocalTime.now().let { it.hour + it.minute / 60.0 }
+    val visibleBookings = upcomingBookings.filter { booking ->
+        booking.slotDate != today || booking.slotHour + 1.0 > currentHour
     }
 
     Scaffold(
@@ -110,7 +124,7 @@ fun StudentBookingScreen(
                     )
                 }
 
-                upcomingBookings.isEmpty() -> {
+                visibleBookings.isEmpty() -> {
                     Column(
                         modifier = Modifier
                             .align(Alignment.Center)
@@ -148,10 +162,12 @@ fun StudentBookingScreen(
                             bottom = 24.dp
                         )
                     ) {
-                        items(upcomingBookings) { booking ->
+                        items(visibleBookings) { booking ->
                             UpcomingBookingCard(
                                 booking = booking,
-                                onStartVideoCall = onStartVideoCall
+                                contacts = contacts,
+                                onStartVideoCall = onStartVideoCall,
+                                onStartRegularCall = onStartRegularCall
                             )
                         }
                     }
@@ -164,7 +180,9 @@ fun StudentBookingScreen(
 @Composable
 fun UpcomingBookingCard(
     booking: BookingDto,
-    onStartVideoCall: (contactId: String, otherPersonName: String, bookingId: String, teacherId: String) -> Unit
+    contacts: List<ContactDto>,
+    onStartVideoCall: (contactId: String, otherPersonName: String, bookingId: String, teacherId: String) -> Unit,
+    onStartRegularCall: (contactId: String, otherPersonName: String) -> Unit
 ) {
     val slotDate = runCatching {
         LocalDate.parse(booking.slotDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
@@ -262,17 +280,19 @@ fun UpcomingBookingCard(
             )
         }
 
-        // Video call button only shown for confirmed bookings
-        // bookingId used as room ID so both student and teacher join the same room
+        // Video call button — trial lobby if no accepted contact, regular lobby if one exists
         if (booking.status == "CONFIRMED") {
+            val acceptedContact = contacts.firstOrNull {
+                it.teacherId == booking.teacherId && it.status == "ACCEPTED"
+            }
             Button(
                 onClick = {
-                    onStartVideoCall(
-                        booking.id,      // bookingId as room ID — matches teacher side
-                        booking.teacherName.ifBlank { "Teacher" },
-                        booking.id,
-                        booking.teacherId
-                    )
+                    val teacherDisplayName = booking.teacherName.ifBlank { "Teacher" }
+                    if (acceptedContact != null) {
+                        onStartRegularCall(acceptedContact.id, teacherDisplayName)
+                    } else {
+                        onStartVideoCall(booking.id, teacherDisplayName, booking.id, booking.teacherId)
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(

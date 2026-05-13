@@ -5,6 +5,7 @@ package com.marketplace.routes
 import com.marketplace.repository.BookingRepository
 import com.marketplace.repository.TeacherRepository
 import com.marketplace.repository.TrialResultRepository
+import com.marketplace.service.AvailabilityService
 import com.marketplace.service.ContactService
 import com.marketplace.service.PaymentService
 import io.ktor.http.*
@@ -49,6 +50,7 @@ fun Application.trialResultRoutes() {
     val contactService        = ContactService()
     val paymentService        = PaymentService()
     val teacherRepository     = TeacherRepository()
+    val availabilityService   = AvailabilityService()
 
     routing {
         authenticate("auth-jwt") {
@@ -96,6 +98,7 @@ fun Application.trialResultRoutes() {
                     )
 
                     bookingRepository.updateStatus(request.bookingId, "CANCELLED")
+                    availabilityService.blockSlot(request.teacherId, booking.slotDate, booking.slotHour)
 
                     val teacher     = teacherRepository.findById(request.teacherId)
                     val lessonAmount = (teacher?.hourlyRate ?: 0.0) / 2.0

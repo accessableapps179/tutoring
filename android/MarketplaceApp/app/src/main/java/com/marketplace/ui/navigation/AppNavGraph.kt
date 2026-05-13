@@ -142,6 +142,10 @@ fun AppNavGraph() {
                     if (role == "STUDENT") navController.navigate("my_lessons/$userId")
                     else navController.navigate("my_bookings/$role")
                 },
+                onMyTutorClick = { teacherId, teacherName ->
+                    Session.pendingTeacherName = teacherName
+                    navController.navigate("book_teacher/$teacherId")
+                },
                 onManageProfileClick      = { navController.navigate("teacher_profile/$userId") },
                 onManageAvailabilityClick = { navController.navigate("teacher_availability/$userId") },
                 onMessagesClick           = { navController.navigate("messages_list/$role/$userId") },
@@ -284,6 +288,10 @@ fun AppNavGraph() {
                 onStartVideoCall = { contactId, otherPersonName, bookingId, teacherId ->
                     Session.pendingCallName = otherPersonName
                     navController.navigate("lobby_trial/$contactId/$bookingId/$teacherId")
+                },
+                onStartRegularCall = { contactId, otherPersonName ->
+                    Session.pendingCallName = otherPersonName
+                    navController.navigate("lobby/$contactId")
                 }
             )
         }

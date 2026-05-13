@@ -343,4 +343,22 @@ class AvailabilityService(
             )
         )
     }
+
+    fun blockSlot(teacherId: String, date: String, hour: Double) {
+        val existing = availabilityRepository.getOverridesForDate(teacherId, date)
+            .firstOrNull { it.hour == hour }
+        if (existing != null) {
+            availabilityRepository.saveOverride(existing.copy(isAvailable = false))
+        } else {
+            availabilityRepository.saveOverride(
+                AvailabilityOverride(
+                    id        = UUID.randomUUID().toString(),
+                    teacherId = teacherId,
+                    date      = date,
+                    hour      = hour,
+                    isAvailable = false
+                )
+            )
+        }
+    }
 }

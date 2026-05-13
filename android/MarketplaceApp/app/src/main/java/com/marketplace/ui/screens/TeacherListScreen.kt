@@ -52,6 +52,7 @@ import com.marketplace.MarketplaceFirebaseService
 import com.marketplace.Session
 import com.marketplace.dto.AppLanguage
 import com.marketplace.dto.TeacherDto
+import com.marketplace.viewmodel.ContactViewModel
 import com.marketplace.viewmodel.MessageViewModel
 import com.marketplace.viewmodel.TeacherViewModel
 
@@ -67,16 +68,20 @@ fun TeacherListScreen(
     onMessagesClick: () -> Unit = {},
     onPaymentCardClick: () -> Unit = {},
     onBalanceClick: () -> Unit = {},
+    onMyTutorClick: (teacherId: String, teacherName: String) -> Unit = { _, _ -> },
     onChangePasswordClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     viewModel: TeacherViewModel = viewModel(),
-    messageViewModel: MessageViewModel
+    messageViewModel: MessageViewModel,
+    contactViewModel: ContactViewModel = viewModel()
 ) {
     val teachers by viewModel.teachers.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val isSearchActive by viewModel.isSearchActive.collectAsState()
     val unreadCount by messageViewModel.unreadCount.collectAsState()
+    val contacts by contactViewModel.contacts.collectAsState()
+    val acceptedContacts = contacts.filter { it.status == "ACCEPTED" }
     val context = LocalContext.current
 
     var selectedTargetLanguage by remember { mutableStateOf<AppLanguage?>(null) }
@@ -111,6 +116,9 @@ fun TeacherListScreen(
             viewModel.loadTeachers()
         }
         messageViewModel.loadUnreadCount()
+        if (role == "STUDENT") {
+            contactViewModel.loadContacts()
+        }
     }
 
     // Fix #3: start polling in the ViewModel (which owns viewModelScope and can use delay
@@ -222,6 +230,28 @@ fun TeacherListScreen(
                             Button(onClick = onMyBookingsClick, modifier = Modifier.fillMaxWidth()) {
                                 Text(text = "My Bookings", fontWeight = FontWeight.Bold)
                             }
+
+                            if (acceptedContacts.isNotEmpty()) {
+                                Text(
+                                    text = "My Tutors",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                                acceptedContacts.forEach { contact ->
+                                    Button(
+                                        onClick = { onMyTutorClick(contact.teacherId, contact.teacherName) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                        )
+                                    ) {
+                                        Text(text = contact.teacherName, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+
                             Button(onClick = onPaymentCardClick, modifier = Modifier.fillMaxWidth()) {
                                 Text(text = "Payment Card", fontWeight = FontWeight.Bold)
                             }
