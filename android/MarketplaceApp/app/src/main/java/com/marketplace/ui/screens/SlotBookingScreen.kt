@@ -356,6 +356,7 @@ fun SlotBookingScreen(
                                         DoubleChipInner(
                                             time = formatSlotTime(secondSlot.hour),
                                             isSelected = true,
+                                            isSecondChip = true,
                                             modifier = Modifier.weight(1f).height(44.dp),
                                             onClick = if (secondCanShift) {
                                                 { availabilityViewModel.selectSlot(secondSlot) }
@@ -384,9 +385,11 @@ fun SlotBookingScreen(
                             ) {
                                 rowSlots.forEach { slot ->
                                     val isSelectedChip = slot.hour == selectedFirstHour || slot.hour == selectedSecondHour
+                                    val isSecond = slot.hour == selectedSecondHour
                                     DoubleChip(
                                         slot = slot,
                                         isSelected = isSelectedChip,
+                                        isSecondOfPair = isSecond,
                                         freeHours = freeHours,
                                         onSelect = { availabilityViewModel.selectSlot(it) }
                                     )
@@ -519,11 +522,16 @@ fun SlotBookingScreen(
 private fun DoubleChipInner(
     time: String,
     isSelected: Boolean,
+    isSecondChip: Boolean = false,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
     val bgColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFF4CAF50),
+        targetValue = when {
+            isSelected && isSecondChip -> MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+            isSelected -> MaterialTheme.colorScheme.primary
+            else -> Color(0xFF4CAF50)
+        },
         animationSpec = tween(200),
         label = "doubleChipInner"
     )
@@ -543,16 +551,18 @@ private fun DoubleChipInner(
 private fun RowScope.DoubleChip(
     slot: AvailableSlotDto,
     isSelected: Boolean,
+    isSecondOfPair: Boolean = false,
     freeHours: Set<Double>,
     onSelect: (AvailableSlotDto) -> Unit
 ) {
     val canStartDouble = !slot.isBooked && (slot.hour + 0.5) in freeHours
     val bgColor by animateColorAsState(
         targetValue = when {
+            isSelected && isSecondOfPair -> MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
             isSelected  -> MaterialTheme.colorScheme.primary
             slot.isBooked -> Color(0xFFE53935)
             canStartDouble -> Color(0xFF4CAF50)
-            else -> Color(0xFF4CAF50).copy(alpha = 0.4f)  // dimmed — can't start a double
+            else -> Color(0xFF4CAF50).copy(alpha = 0.4f)
         },
         animationSpec = tween(200),
         label = "doubleChipColor"
