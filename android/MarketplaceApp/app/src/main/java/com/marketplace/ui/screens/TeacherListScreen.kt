@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,7 +17,11 @@ import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
@@ -30,7 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -137,15 +142,13 @@ fun TeacherListScreen(
     }
 
     var displayTime by remember { mutableStateOf(Session.currentDateTime()) }
-    var debugInput by remember {
-        mutableStateOf(
-            Session.debugDateTime?.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) ?: ""
-        )
-    }
+    var pickerDateTime by remember { mutableStateOf(Session.currentDateTime()) }
+    var debugOverrideActive by remember { mutableStateOf(Session.debugDateTime != null) }
     LaunchedEffect("clock") {
         while (true) {
             delay(1000L)
             displayTime = Session.currentDateTime()
+            if (!debugOverrideActive) pickerDateTime = displayTime
         }
     }
 
@@ -223,13 +226,20 @@ fun TeacherListScreen(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer
                             )
                         ) {
+                            val applyOverride: (LocalDateTime) -> Unit = { dt ->
+                                pickerDateTime = dt
+                                Session.debugDateTime = dt
+                                displayTime = dt
+                                debugOverrideActive = true
+                            }
                             Column(
                                 modifier = Modifier
                                     .padding(16.dp)
                                     .fillMaxWidth(),
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
+                                // Live clock
                                 Text(
                                     text = displayTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")),
                                     style = MaterialTheme.typography.displaySmall,
@@ -241,30 +251,107 @@ fun TeacherListScreen(
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
-                                OutlinedTextField(
-                                    value = debugInput,
-                                    onValueChange = { input ->
-                                        debugInput = input
-                                        if (input.isEmpty()) {
-                                            Session.debugDateTime = null
-                                        } else {
-                                            runCatching {
-                                                LocalDateTime.parse(
-                                                    input,
-                                                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-                                                )
-                                            }.onSuccess { dt ->
-                                                Session.debugDateTime = dt
-                                                displayTime = dt
-                                            }
+                                // Date adjuster
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    IconButton(onClick = { applyOverride(pickerDateTime.minusDays(1)) }) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                            contentDescription = "Previous day",
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    }
+                                    Text(
+                                        text = pickerDateTime.format(DateTimeFormatter.ofPattern("d MMM yyyy")),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 8.dp),
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    IconButton(onClick = { applyOverride(pickerDateTime.plusDays(1)) }) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                            contentDescription = "Next day",
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    }
+                                }
+                                // Hour and minute adjusters
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    // Hours
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        IconButton(onClick = { applyOverride(pickerDateTime.plusHours(1)) }) {
+                                            Icon(
+                                                imageVector = Icons.Filled.KeyboardArrowUp,
+                                                contentDescription = "Hour up",
+                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
                                         }
-                                    },
-                                    label = { Text("Override date/time (yyyy-MM-dd HH:mm)") },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 4.dp),
-                                    singleLine = true
-                                )
+                                        Text(
+                                            text = pickerDateTime.format(DateTimeFormatter.ofPattern("HH")),
+                                            style = MaterialTheme.typography.headlineMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                        IconButton(onClick = { applyOverride(pickerDateTime.minusHours(1)) }) {
+                                            Icon(
+                                                imageVector = Icons.Filled.KeyboardArrowDown,
+                                                contentDescription = "Hour down",
+                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        }
+                                    }
+                                    Text(
+                                        text = ":",
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.padding(horizontal = 4.dp)
+                                    )
+                                    // Minutes
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        IconButton(onClick = { applyOverride(pickerDateTime.plusMinutes(1)) }) {
+                                            Icon(
+                                                imageVector = Icons.Filled.KeyboardArrowUp,
+                                                contentDescription = "Minute up",
+                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        }
+                                        Text(
+                                            text = pickerDateTime.format(DateTimeFormatter.ofPattern("mm")),
+                                            style = MaterialTheme.typography.headlineMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                        IconButton(onClick = { applyOverride(pickerDateTime.minusMinutes(1)) }) {
+                                            Icon(
+                                                imageVector = Icons.Filled.KeyboardArrowDown,
+                                                contentDescription = "Minute down",
+                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        }
+                                    }
+                                }
+                                // Reset — only visible when override is active
+                                if (debugOverrideActive) {
+                                    TextButton(
+                                        onClick = {
+                                            Session.debugDateTime = null
+                                            debugOverrideActive = false
+                                        },
+                                        modifier = Modifier.align(Alignment.End)
+                                    ) {
+                                        Text(
+                                            text = "Reset to system time",
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    }
+                                }
                             }
                         }
 
