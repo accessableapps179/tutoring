@@ -77,7 +77,7 @@ fun SlotBookingScreen(
     val isBookingLoading by bookingViewModel.isLoading.collectAsState()
 
     val isPostTrial = Session.pendingContactId.isNotEmpty()
-    var selectedDuration by remember { mutableStateOf(1) }
+    var selectedDuration by remember { mutableStateOf(2) }
 
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var weekOffset by remember { mutableStateOf(0) }
@@ -161,27 +161,6 @@ fun SlotBookingScreen(
                         modifier = Modifier
                             .weight(1f)
                             .background(
-                                if (selectedDuration == 1) MaterialTheme.colorScheme.primary
-                                else Color.Transparent
-                            )
-                            .clickable {
-                                selectedDuration = 1
-                                availabilityViewModel.clearSelectedSlot()
-                            }
-                            .padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "25 min",
-                            fontWeight = FontWeight.Bold,
-                            color = if (selectedDuration == 1) MaterialTheme.colorScheme.onPrimary
-                                    else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .background(
                                 if (selectedDuration == 2) MaterialTheme.colorScheme.primary
                                 else Color.Transparent
                             )
@@ -196,6 +175,27 @@ fun SlotBookingScreen(
                             text = "50 min",
                             fontWeight = FontWeight.Bold,
                             color = if (selectedDuration == 2) MaterialTheme.colorScheme.onPrimary
+                                    else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                if (selectedDuration == 1) MaterialTheme.colorScheme.primary
+                                else Color.Transparent
+                            )
+                            .clickable {
+                                selectedDuration = 1
+                                availabilityViewModel.clearSelectedSlot()
+                            }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "25 min",
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedDuration == 1) MaterialTheme.colorScheme.onPrimary
                                     else MaterialTheme.colorScheme.onSurface
                         )
                     }
