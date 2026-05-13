@@ -325,11 +325,12 @@ class AvailabilityService(
         }
 
         // One bulk transaction: delete old overrides then batch-insert new ones
+        // Bookings show as CONFIRMED/PENDING regardless of overrides, so deleting
+        // their overrides is safe — the booking status takes priority in getTeacherDayView
         availabilityRepository.stampOverrides(
-            teacherId            = teacherId,
-            dates                = allDates,
-            preservedHoursByDate = preservedHoursByDate,
-            newOverrides         = newOverrides
+            teacherId    = teacherId,
+            dates        = allDates,
+            newOverrides = newOverrides
         )
 
         return StampResult(slotsWritten = newOverrides.size, conflicts = conflicts)
