@@ -33,3 +33,12 @@ data class AvailableSlot(
     val hour: Double,
     val isBooked: Boolean
 )
+
+@Serializable
+data class PlatonicSlot(
+    val id: String,
+    val teacherId: String,
+    val weekNumber: Int,  // 1–4 (week-of-month pattern)
+    val dayOfWeek: Int,   // 1=Mon … 7=Sun
+    val hour: Double
+)

@@ -4,6 +4,7 @@ package com.marketplace.service
 
 import com.marketplace.domain.AvailabilityOverride
 import com.marketplace.domain.AvailableSlot
+import com.marketplace.domain.PlatonicSlot
 import com.marketplace.domain.TeacherHourRange
 import com.marketplace.domain.WeeklySlot
 import com.marketplace.repository.AvailabilityRepository
@@ -18,8 +19,12 @@ data class TeacherSlotStatus(
     val hour: Double,
     val status: String,
     val bookingId: String?,
-    val studentName: String?
+    val studentName: String?,
+    val conflictsWithPag: Boolean = false
 )
+
+data class StampConflict(val date: String, val hour: Double)
+data class StampResult(val slotsWritten: Int, val conflicts: List<StampConflict>)
 
 class AvailabilityService(
     private val availabilityRepository: AvailabilityRepository = AvailabilityRepository(),
@@ -58,12 +63,13 @@ class AvailabilityService(
     // ─── Teacher Day View ────────────────────────────────────
 
     fun getTeacherDayView(teacherId: String, date: String): List<TeacherSlotStatus> {
-        val localDate = LocalDate.parse(date, dateFormatter)
-        val dayOfWeek = localDate.dayOfWeek.value
+        val localDate  = LocalDate.parse(date, dateFormatter)
+        val dayOfWeek  = localDate.dayOfWeek.value
+        val weekNumber = minOf(4, (localDate.dayOfMonth - 1) / 7 + 1)
 
         val hourRange = availabilityRepository.getHourRange(teacherId)
         val startHour = hourRange?.startHour ?: 6
-        val endHour = hourRange?.endHour ?: 22
+        val endHour   = hourRange?.endHour   ?: 22
 
         val weeklySlots = availabilityRepository.getWeeklySlots(teacherId)
             .filter { it.dayOfWeek == dayOfWeek }
@@ -72,47 +78,52 @@ class AvailabilityService(
 
         val overrides = availabilityRepository.getOverridesForDate(teacherId, date)
         for (override in overrides) {
-            if (override.isAvailable) {
-                weeklySlots.add(override.hour)
-            } else {
-                weeklySlots.remove(override.hour)
-            }
+            if (override.isAvailable) weeklySlots.add(override.hour)
+            else                      weeklySlots.remove(override.hour)
         }
 
         // Include CANCELLED bookings so we can match them against trial results
         val bookings = bookingRepository.findByTeacherId(teacherId)
             .filter { it.slotDate == date }
 
-        // Build a map of bookingId -> trial result for this teacher/date
         val trialResultsByBookingId = trialResultRepository
             .findByTeacherIdAndDate(teacherId, date)
             .associateBy { it.bookingId }
 
+        // PAG hours for this weekNumber/dayOfWeek — used for conflict detection
+        val pagHours = availabilityRepository.getPlatonicSlots(teacherId)
+            .filter { it.weekNumber == weekNumber && it.dayOfWeek == dayOfWeek }
+            .map { it.hour }
+            .toSet()
+
         val result = mutableListOf<TeacherSlotStatus>()
 
-        // Step by 0.5 for 30-minute slots
         var h = startHour.toDouble()
         while (h < endHour.toDouble()) {
-            val booking = bookings.firstOrNull { it.slotHour == h }
+            val booking     = bookings.firstOrNull { it.slotHour == h }
             val isInSchedule = weeklySlots.contains(h)
             val trialResult = booking?.let { trialResultsByBookingId[it.id] }
 
             val status = when {
-                trialResult != null && trialResult.happy  -> "TRIAL_COMPLETED_HAPPY"
-                trialResult != null && !trialResult.happy -> "TRIAL_COMPLETED_UNHAPPY"
+                trialResult != null && trialResult.happy   -> "TRIAL_COMPLETED_HAPPY"
+                trialResult != null && !trialResult.happy  -> "TRIAL_COMPLETED_UNHAPPY"
                 booking != null && booking.status == "CONFIRMED" -> "CONFIRMED"
                 booking != null && booking.status == "PENDING"   -> "PENDING"
                 isInSchedule -> "AVAILABLE"
                 else         -> "UNAVAILABLE"
             }
 
+            val hasLiveBooking = status == "CONFIRMED" || status == "PENDING"
+            val conflictsWithPag = hasLiveBooking && pagHours.isNotEmpty() && h !in pagHours
+
             result.add(
                 TeacherSlotStatus(
-                    date = date,
-                    hour = h,
-                    status = status,
-                    bookingId = booking?.id,
-                    studentName = booking?.studentName
+                    date           = date,
+                    hour           = h,
+                    status         = status,
+                    bookingId      = booking?.id,
+                    studentName    = booking?.studentName,
+                    conflictsWithPag = conflictsWithPag
                 )
             )
             h += 0.5
@@ -223,6 +234,89 @@ class AvailabilityService(
             startHour = 6,
             endHour = 22
         )
+    }
+
+    // ─── Platonic Grid ───────────────────────────────────────
+
+    fun getPlatonicSlots(teacherId: String): List<PlatonicSlot> =
+        availabilityRepository.getPlatonicSlots(teacherId)
+
+    fun togglePlatonicSlot(
+        teacherId:  String,
+        weekNumber: Int,
+        dayOfWeek:  Int,
+        hour:       Double
+    ): Boolean {
+        val existing = availabilityRepository.getPlatonicSlots(teacherId)
+            .any { it.weekNumber == weekNumber && it.dayOfWeek == dayOfWeek && it.hour == hour }
+
+        return if (existing) {
+            availabilityRepository.deletePlatonicSlot(teacherId, weekNumber, dayOfWeek, hour)
+            false
+        } else {
+            availabilityRepository.savePlatonicSlot(
+                PlatonicSlot(
+                    id         = UUID.randomUUID().toString(),
+                    teacherId  = teacherId,
+                    weekNumber = weekNumber,
+                    dayOfWeek  = dayOfWeek,
+                    hour       = hour
+                )
+            )
+            true
+        }
+    }
+
+    fun stampMonth(teacherId: String, year: Int, month: Int): StampResult {
+        val firstDay = LocalDate.of(year, month, 1)
+        val lastDay  = firstDay.withDayOfMonth(firstDay.lengthOfMonth())
+
+        val pagSet = availabilityRepository.getPlatonicSlots(teacherId)
+            .map { Triple(it.weekNumber, it.dayOfWeek, it.hour) }
+            .toSet()
+
+        // Fetch all teacher bookings once — avoids N DB calls inside the loop
+        val allBookings = bookingRepository.findByTeacherId(teacherId)
+            .filter { it.status == "PENDING" || it.status == "CONFIRMED" }
+
+        val conflicts      = mutableListOf<StampConflict>()
+        var slotsWritten   = 0
+
+        var current = firstDay
+        while (!current.isAfter(lastDay)) {
+            val dayOfWeek  = current.dayOfWeek.value
+            val weekNumber = minOf(4, (current.dayOfMonth - 1) / 7 + 1)
+            val dateStr    = current.format(dateFormatter)
+
+            val liveBookingHours = allBookings
+                .filter { it.slotDate == dateStr }
+                .map { it.slotHour }
+                .toSet()
+
+            var h = 0.0
+            while (h < 24.0) {
+                val pagSaysOn = Triple(weekNumber, dayOfWeek, h) in pagSet
+
+                if (h in liveBookingHours) {
+                    if (!pagSaysOn) conflicts.add(StampConflict(date = dateStr, hour = h))
+                } else {
+                    availabilityRepository.saveOverride(
+                        AvailabilityOverride(
+                            id          = UUID.randomUUID().toString(),
+                            teacherId   = teacherId,
+                            date        = dateStr,
+                            hour        = h,
+                            isAvailable = pagSaysOn
+                        )
+                    )
+                    slotsWritten++
+                }
+                h += 0.5
+            }
+            current = current.plusDays(1)
+        }
+
+        return StampResult(slotsWritten = slotsWritten, conflicts = conflicts)
     }
 
     fun saveHourRange(teacherId: String, startHour: Int, endHour: Int): TeacherHourRange {

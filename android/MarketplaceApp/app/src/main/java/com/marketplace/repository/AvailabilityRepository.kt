@@ -3,9 +3,13 @@ package com.marketplace.repository
 import com.marketplace.api.RetrofitClient
 import com.marketplace.dto.AvailableSlotDto
 import com.marketplace.dto.HourRangeRequest
+import com.marketplace.dto.PlatonicSlotDto
+import com.marketplace.dto.StampMonthRequest
+import com.marketplace.dto.StampMonthResponse
 import com.marketplace.dto.TeacherHourRangeDto
 import com.marketplace.dto.TeacherSlotStatusDto
 import com.marketplace.dto.ToggleOverrideRequest
+import com.marketplace.dto.TogglePlatonicSlotRequest
 import com.marketplace.dto.ToggleResponse
 import com.marketplace.dto.ToggleWeeklySlotRequest
 import com.marketplace.dto.WeeklySlotDto
@@ -87,5 +91,25 @@ class AvailabilityRepository {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun getPlatonicSlots(): Result<List<PlatonicSlotDto>> {
+        return try { Result.success(api.getPlatonicSlots()) }
+        catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun togglePlatonicSlot(
+        weekNumber: Int,
+        dayOfWeek: Int,
+        hour: Double
+    ): Result<ToggleResponse> {
+        return try {
+            Result.success(api.togglePlatonicSlot(TogglePlatonicSlotRequest(weekNumber, dayOfWeek, hour)))
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun stampMonth(year: Int, month: Int): Result<StampMonthResponse> {
+        return try { Result.success(api.stampMonth(StampMonthRequest(year, month))) }
+        catch (e: Exception) { Result.failure(e) }
     }
 }

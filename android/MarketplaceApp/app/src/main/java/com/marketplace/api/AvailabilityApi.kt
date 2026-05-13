@@ -2,9 +2,13 @@ package com.marketplace.api
 
 import com.marketplace.dto.AvailableSlotDto
 import com.marketplace.dto.HourRangeRequest
+import com.marketplace.dto.PlatonicSlotDto
+import com.marketplace.dto.StampMonthRequest
+import com.marketplace.dto.StampMonthResponse
 import com.marketplace.dto.TeacherHourRangeDto
 import com.marketplace.dto.TeacherSlotStatusDto
 import com.marketplace.dto.ToggleOverrideRequest
+import com.marketplace.dto.TogglePlatonicSlotRequest
 import com.marketplace.dto.ToggleResponse
 import com.marketplace.dto.ToggleWeeklySlotRequest
 import com.marketplace.dto.WeeklySlotDto
@@ -48,4 +52,17 @@ interface AvailabilityApi {
     suspend fun saveHourRange(
         @Body request: HourRangeRequest
     ): TeacherHourRangeDto
+
+    @GET("platonic-slots")
+    suspend fun getPlatonicSlots(): List<PlatonicSlotDto>
+
+    @POST("platonic-slots/toggle")
+    suspend fun togglePlatonicSlot(
+        @Body request: TogglePlatonicSlotRequest
+    ): ToggleResponse
+
+    @POST("platonic-slots/stamp")
+    suspend fun stampMonth(
+        @Body request: StampMonthRequest
+    ): StampMonthResponse
 }

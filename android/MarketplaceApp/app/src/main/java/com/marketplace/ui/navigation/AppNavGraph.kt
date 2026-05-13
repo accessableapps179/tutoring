@@ -26,6 +26,7 @@ import com.marketplace.ui.screens.RejoinScreen
 import com.marketplace.ui.screens.SlotBookingScreen
 import com.marketplace.ui.screens.StudentBookingScreen
 import com.marketplace.ui.screens.StudentLedgerScreen
+import com.marketplace.ui.screens.PlatonicAvailabilityScreen
 import com.marketplace.ui.screens.TeacherAvailabilityScreen
 import com.marketplace.ui.screens.TeacherBalanceScreen
 import com.marketplace.ui.screens.TeacherDetailScreen
@@ -212,17 +213,22 @@ fun AppNavGraph() {
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
         ) {
             TeacherAvailabilityScreen(
-                onBackClick      = rememberSingleClick { navController.popBackStack() },
-                onStartVideoCall = { contactId, otherPersonName ->
-                    // Fresh call — go through lobby so both sides sync up
+                onBackClick         = rememberSingleClick { navController.popBackStack() },
+                onEditTemplateClick = { navController.navigate("platonic_availability") },
+                onStartVideoCall    = { contactId, otherPersonName ->
                     Session.pendingCallName = otherPersonName
                     navController.navigate("lobby/$contactId")
                 },
                 onRejoinCall = { contactId, otherPersonName ->
-                    // Rejoin — skip lobby, go straight into the signal room
                     Session.pendingCallName = otherPersonName
                     navController.navigate("video_call/$contactId")
                 }
+            )
+        }
+
+        composable("platonic_availability") {
+            PlatonicAvailabilityScreen(
+                onBackClick = rememberSingleClick { navController.popBackStack() }
             )
         }
 

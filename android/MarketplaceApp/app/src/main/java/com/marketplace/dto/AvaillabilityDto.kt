@@ -54,5 +54,37 @@ data class TeacherSlotStatusDto(
     val hour: Double,
     val status: String,        // UNAVAILABLE, AVAILABLE, PENDING, CONFIRMED
     val bookingId: String? = null,
-    val studentName: String? = null
+    val studentName: String? = null,
+    val conflictsWithPag: Boolean = false
+)
+
+@Serializable
+data class PlatonicSlotDto(
+    val id: String,
+    val teacherId: String,
+    val weekNumber: Int,
+    val dayOfWeek: Int,
+    val hour: Double
+)
+
+@Serializable
+data class TogglePlatonicSlotRequest(
+    val weekNumber: Int,
+    val dayOfWeek: Int,
+    val hour: Double
+)
+
+@Serializable
+data class StampMonthRequest(
+    val year: Int,
+    val month: Int
+)
+
+@Serializable
+data class StampConflictDto(val date: String, val hour: Double)
+
+@Serializable
+data class StampMonthResponse(
+    val slotsWritten: Int,
+    val conflicts: List<StampConflictDto>
 )

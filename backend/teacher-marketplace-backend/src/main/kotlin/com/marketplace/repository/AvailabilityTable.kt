@@ -23,3 +23,11 @@ object TeacherHourRangeTable : IdTable<String>("teacher_hour_ranges") {
     val startHour = integer("start_hour").default(6)
     val endHour = integer("end_hour").default(22)
 }
+
+object PlatonicSlotTable : IdTable<String>("platonic_slots") {
+    override val id = varchar("id", 50).entityId()
+    val teacherId  = varchar("teacher_id", 50)
+    val weekNumber = integer("week_number")   // 1–4
+    val dayOfWeek  = integer("day_of_week")   // 1=Mon … 7=Sun
+    val hour       = double("hour")
+}

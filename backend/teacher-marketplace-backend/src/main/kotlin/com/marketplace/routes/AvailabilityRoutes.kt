@@ -34,7 +34,30 @@ data class TeacherSlotStatusResponse(
     val hour: Double,
     val status: String,
     val bookingId: String?,
-    val studentName: String?
+    val studentName: String?,
+    val conflictsWithPag: Boolean = false
+)
+
+@Serializable
+data class TogglePlatonicSlotRequest(
+    val weekNumber: Int,
+    val dayOfWeek: Int,
+    val hour: Double
+)
+
+@Serializable
+data class StampMonthRequest(
+    val year: Int,
+    val month: Int
+)
+
+@Serializable
+data class StampConflictResponse(val date: String, val hour: Double)
+
+@Serializable
+data class StampMonthResponse(
+    val slotsWritten: Int,
+    val conflicts: List<StampConflictResponse>
 )
 
 fun Application.availabilityRoutes() {
@@ -91,11 +114,12 @@ fun Application.availabilityRoutes() {
                 val slots = availabilityService.getTeacherDayView(teacherId, date)
                 val response = slots.map {
                     TeacherSlotStatusResponse(
-                        date = it.date,
-                        hour = it.hour,
-                        status = it.status,
-                        bookingId = it.bookingId,
-                        studentName = it.studentName
+                        date             = it.date,
+                        hour             = it.hour,
+                        status           = it.status,
+                        bookingId        = it.bookingId,
+                        studentName      = it.studentName,
+                        conflictsWithPag = it.conflictsWithPag
                     )
                 }
                 call.respond(response)
@@ -139,6 +163,41 @@ fun Application.availabilityRoutes() {
                     request.hour
                 )
                 call.respond(mapOf("isAvailable" to isNowAvailable))
+            }
+
+            get("/platonic-slots") {
+                val principal = call.principal<JWTPrincipal>()
+                val teacherId = principal?.payload?.subject ?: return@get call.respondText(
+                    "Unauthorized", status = HttpStatusCode.Unauthorized
+                )
+                call.respond(availabilityService.getPlatonicSlots(teacherId))
+            }
+
+            post("/platonic-slots/toggle") {
+                val principal = call.principal<JWTPrincipal>()
+                val teacherId = principal?.payload?.subject ?: return@post call.respondText(
+                    "Unauthorized", status = HttpStatusCode.Unauthorized
+                )
+                val request = call.receive<TogglePlatonicSlotRequest>()
+                val isNowOn = availabilityService.togglePlatonicSlot(
+                    teacherId, request.weekNumber, request.dayOfWeek, request.hour
+                )
+                call.respond(mapOf("isAvailable" to isNowOn))
+            }
+
+            post("/platonic-slots/stamp") {
+                val principal = call.principal<JWTPrincipal>()
+                val teacherId = principal?.payload?.subject ?: return@post call.respondText(
+                    "Unauthorized", status = HttpStatusCode.Unauthorized
+                )
+                val request = call.receive<StampMonthRequest>()
+                val result  = availabilityService.stampMonth(teacherId, request.year, request.month)
+                call.respond(
+                    StampMonthResponse(
+                        slotsWritten = result.slotsWritten,
+                        conflicts    = result.conflicts.map { StampConflictResponse(it.date, it.hour) }
+                    )
+                )
             }
 
             post("/availability/hour-range") {

@@ -10,6 +10,7 @@ import com.marketplace.repository.LedgerTable
 import com.marketplace.repository.MessageTable
 import com.marketplace.repository.PaymentCardTable
 import com.marketplace.repository.PlatformSettingsTable
+import com.marketplace.repository.PlatonicSlotTable
 import com.marketplace.repository.TeacherHourRangeTable
 import com.marketplace.repository.TeacherTable
 import com.marketplace.repository.TrialResultTable
@@ -37,6 +38,7 @@ object DatabaseFactory {
             WeeklySlotTable,
             AvailabilityOverrideTable,
             TeacherHourRangeTable,
+            PlatonicSlotTable,
             ContactTable,
             MessageTable,
             PaymentCardTable,
@@ -58,6 +60,7 @@ object DatabaseFactory {
             WeeklySlotTable,
             AvailabilityOverrideTable,
             TeacherHourRangeTable,
+            PlatonicSlotTable,
             ContactTable,
             MessageTable,
             PaymentCardTable,
@@ -73,6 +76,7 @@ object DatabaseFactory {
             WeeklySlotTable,
             AvailabilityOverrideTable,
             TeacherHourRangeTable,
+            PlatonicSlotTable,
             ContactTable,
             MessageTable,
             PaymentCardTable,

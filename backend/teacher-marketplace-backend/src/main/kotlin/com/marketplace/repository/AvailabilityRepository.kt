@@ -1,6 +1,7 @@
 package com.marketplace.repository
 
 import com.marketplace.domain.AvailabilityOverride
+import com.marketplace.domain.PlatonicSlot
 import com.marketplace.domain.TeacherHourRange
 import com.marketplace.domain.WeeklySlot
 import org.jetbrains.exposed.sql.ResultRow
@@ -11,7 +12,6 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
-//import org.jetbrains.exposed.sql.upsert
 
 class AvailabilityRepository {
 
@@ -130,6 +130,57 @@ class AvailabilityRepository {
     }
 
     // ─── Mappers ─────────────────────────────────────────────
+
+    // ─── Platonic Slots ──────────────────────────────────────
+
+    fun getPlatonicSlots(teacherId: String): List<PlatonicSlot> = transaction {
+        PlatonicSlotTable.select { PlatonicSlotTable.teacherId eq teacherId }
+            .map { mapRowToPlatonicSlot(it) }
+    }
+
+    fun savePlatonicSlot(slot: PlatonicSlot): PlatonicSlot = transaction {
+        val exists = PlatonicSlotTable.select {
+            (PlatonicSlotTable.teacherId  eq slot.teacherId)  and
+            (PlatonicSlotTable.weekNumber eq slot.weekNumber) and
+            (PlatonicSlotTable.dayOfWeek  eq slot.dayOfWeek)  and
+            (PlatonicSlotTable.hour       eq slot.hour)
+        }.count() > 0
+
+        if (!exists) {
+            PlatonicSlotTable.insert {
+                it[id]         = slot.id
+                it[teacherId]  = slot.teacherId
+                it[weekNumber] = slot.weekNumber
+                it[dayOfWeek]  = slot.dayOfWeek
+                it[hour]       = slot.hour
+            }
+        }
+        slot
+    }
+
+    fun deletePlatonicSlot(
+        teacherId: String,
+        weekNumber: Int,
+        dayOfWeek: Int,
+        hour: Double
+    ): Boolean = transaction {
+        PlatonicSlotTable.deleteWhere {
+            (PlatonicSlotTable.teacherId  eq teacherId)  and
+            (PlatonicSlotTable.weekNumber eq weekNumber) and
+            (PlatonicSlotTable.dayOfWeek  eq dayOfWeek)  and
+            (PlatonicSlotTable.hour       eq hour)
+        } > 0
+    }
+
+    // ─── Mappers ─────────────────────────────────────────────
+
+    private fun mapRowToPlatonicSlot(row: ResultRow): PlatonicSlot = PlatonicSlot(
+        id         = row[PlatonicSlotTable.id].value,
+        teacherId  = row[PlatonicSlotTable.teacherId],
+        weekNumber = row[PlatonicSlotTable.weekNumber],
+        dayOfWeek  = row[PlatonicSlotTable.dayOfWeek],
+        hour       = row[PlatonicSlotTable.hour]
+    )
 
     private fun mapRowToWeeklySlot(row: ResultRow): WeeklySlot {
         return WeeklySlot(

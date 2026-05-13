@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.VideoCall
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -90,10 +91,13 @@ suspend fun isCallInProgress(bookingId: String): Boolean {
     }
 }
 
+val SlotOrange = Color(0xFFE65100)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TeacherAvailabilityScreen(
     onBackClick: () -> Unit,
+    onEditTemplateClick: () -> Unit = {},
     onStartVideoCall: (contactId: String, otherPersonName: String) -> Unit = { _, _ -> },
     onRejoinCall: (contactId: String, otherPersonName: String) -> Unit = { _, _ -> },
     availabilityViewModel: AvailabilityViewModel = viewModel(),
@@ -261,6 +265,15 @@ fun TeacherAvailabilityScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onEditTemplateClick) {
+                        Icon(
+                            imageVector = Icons.Filled.GridView,
+                            contentDescription = "Edit template",
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
@@ -460,21 +473,29 @@ fun TeacherSlotChip(
 
     val isClickable = !isTrialCompleted && (!slotIsPast || slot.status == "CONFIRMED")
 
+    val conflictBorder = slot.conflictsWithPag &&
+            (slot.status == "PENDING" || slot.status == "CONFIRMED")
+
     val modifier = if (isTrialCompleted) {
         Modifier
             .size(width = 80.dp, height = 44.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(bgColor)
     } else {
+        val borderWidth = when {
+            conflictBorder -> 3.dp
+            slot.status == "PENDING" && !slotIsPast -> 2.dp
+            else -> 0.dp
+        }
+        val borderColor = when {
+            conflictBorder -> SlotOrange
+            else -> Color.White.copy(alpha = 0.5f)
+        }
         Modifier
             .size(width = 80.dp, height = 44.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(bgColor)
-            .border(
-                width = if (slot.status == "PENDING" && !slotIsPast) 2.dp else 0.dp,
-                color = Color.White.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(12.dp)
-            )
+            .border(width = borderWidth, color = borderColor, shape = RoundedCornerShape(12.dp))
             .clickable(enabled = isClickable) { onClick() }
     }
 
