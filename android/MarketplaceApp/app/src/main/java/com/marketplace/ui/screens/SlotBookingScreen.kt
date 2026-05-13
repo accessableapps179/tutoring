@@ -334,6 +334,9 @@ fun SlotBookingScreen(
                                     )
                                 }
                                 // bordered pair
+                                val secondSlot = rowSlots[secondIdx]
+                                val secondCanShift = !secondSlot.isBooked &&
+                                        (secondSlot.hour + 0.5) in freeHours
                                 Box(
                                     modifier = Modifier
                                         .weight(2f)
@@ -351,9 +354,12 @@ fun SlotBookingScreen(
                                             modifier = Modifier.weight(1f).height(44.dp)
                                         )
                                         DoubleChipInner(
-                                            time = formatSlotTime(rowSlots[secondIdx].hour),
+                                            time = formatSlotTime(secondSlot.hour),
                                             isSelected = true,
-                                            modifier = Modifier.weight(1f).height(44.dp)
+                                            modifier = Modifier.weight(1f).height(44.dp),
+                                            onClick = if (secondCanShift) {
+                                                { availabilityViewModel.selectSlot(secondSlot) }
+                                            } else null
                                         )
                                     }
                                 }
@@ -508,9 +514,14 @@ fun SlotBookingScreen(
     }
 }
 
-// Chip used inside the bordered pair box — no click handler (pair box handles it)
+// Chip used inside the bordered pair box
 @Composable
-private fun DoubleChipInner(time: String, isSelected: Boolean, modifier: Modifier = Modifier) {
+private fun DoubleChipInner(
+    time: String,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
+) {
     val bgColor by animateColorAsState(
         targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFF4CAF50),
         animationSpec = tween(200),
@@ -519,7 +530,8 @@ private fun DoubleChipInner(time: String, isSelected: Boolean, modifier: Modifie
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
-            .background(bgColor),
+            .background(bgColor)
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
         contentAlignment = Alignment.Center
     ) {
         Text(text = time, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
