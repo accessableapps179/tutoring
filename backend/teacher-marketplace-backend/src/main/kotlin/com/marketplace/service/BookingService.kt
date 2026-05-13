@@ -9,7 +9,8 @@ import java.util.UUID
 
 class BookingService(
     private val repository: BookingRepository = BookingRepository(),
-    private val teacherRepository: TeacherRepository = TeacherRepository()
+    private val teacherRepository: TeacherRepository = TeacherRepository(),
+    private val contactService: ContactService = ContactService()
 ) {
 
     fun createBooking(
@@ -26,6 +27,9 @@ class BookingService(
 
         val teacherName = teacherRepository.findById(teacherId)?.name ?: ""
 
+        val existingContact = contactService.getContactBetween(studentId, teacherId)
+        val status = if (existingContact?.status == "ACCEPTED") "CONFIRMED" else "PENDING"
+
         val booking = Booking(
             id = UUID.randomUUID().toString(),
             teacherId = teacherId,
@@ -33,7 +37,7 @@ class BookingService(
             studentName = studentName,
             teacherName = teacherName,
             message = message,
-            status = "PENDING",
+            status = status,
             slotDate = slotDate,
             slotHour = slotHour
         )

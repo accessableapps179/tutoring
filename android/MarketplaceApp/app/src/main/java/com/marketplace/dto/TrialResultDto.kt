@@ -17,7 +17,8 @@ data class TrialResultResponse(
     val bookingId: String,
     val happy: Boolean,
     val timestamp: Long,
-    val contactUnlocked: Boolean
+    val contactUnlocked: Boolean,
+    val contactId: String? = null
 )
 
 @Serializable

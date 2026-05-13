@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.marketplace.Session
 import com.marketplace.viewmodel.BookingViewModel
 import com.marketplace.viewmodel.TrialResultViewModel
 
@@ -54,6 +55,7 @@ fun TrialResultScreen(
     val errorMessage by trialResultViewModel.errorMessage.collectAsState()
     val submitSuccess by trialResultViewModel.submitSuccess.collectAsState()
     val contactUnlocked by trialResultViewModel.contactUnlocked.collectAsState()
+    val contactId by trialResultViewModel.contactId.collectAsState()
 
     LaunchedEffect(submitSuccess) {
         if (submitSuccess) {
@@ -62,6 +64,7 @@ fun TrialResultScreen(
             bookingViewModel.loadUpcomingBookings()
             bookingViewModel.loadTeacherBookings()
             if (contactUnlocked) {
+                Session.pendingContactId = contactId
                 onHappyContactUnlocked()
             } else {
                 onNotHappy()

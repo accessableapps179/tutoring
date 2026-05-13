@@ -42,6 +42,13 @@ object Session {
      */
     var pendingTeacherName: String = ""
 
+    /**
+     * Set after a happy trial result. Holds the contact ID so that after
+     * booking the 2nd lesson the student is taken directly to the chat screen.
+     * Cleared once used or on logout.
+     */
+    var pendingContactId: String = ""
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     fun populate(token: String, role: String, userId: String, name: String) {
@@ -62,5 +69,6 @@ object Session {
         selectedTeacher               = null
         pendingCallName               = ""
         pendingTeacherName            = ""
+        pendingContactId              = ""
     }
 }

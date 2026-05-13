@@ -25,6 +25,10 @@ class TrialResultViewModel : ViewModel() {
     private val _contactUnlocked = MutableStateFlow(false)
     val contactUnlocked: StateFlow<Boolean> = _contactUnlocked
 
+    // Contact ID returned after happy trial, used to navigate to chat after 2nd booking
+    private val _contactId = MutableStateFlow("")
+    val contactId: StateFlow<String> = _contactId
+
     // Whether student can book this teacher
     private val _canBook = MutableStateFlow(true)
     val canBook: StateFlow<Boolean> = _canBook
@@ -47,6 +51,7 @@ class TrialResultViewModel : ViewModel() {
             if (result.isSuccess) {
                 val response = result.getOrNull()!!
                 _contactUnlocked.value = response.contactUnlocked
+                _contactId.value = response.contactId ?: ""
                 _submitSuccess.value = true
             } else {
                 _errorMessage.value = "Failed to submit result. Please try again."

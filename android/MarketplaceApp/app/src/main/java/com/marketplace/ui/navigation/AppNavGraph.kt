@@ -20,6 +20,7 @@ import com.marketplace.ui.screens.LogoutScreen
 import com.marketplace.ui.screens.MessagesListScreen
 import com.marketplace.ui.screens.MyBookingsScreen
 import com.marketplace.ui.screens.NotHappyFunnelScreen
+import com.marketplace.ui.screens.PostTrialScreen
 import com.marketplace.ui.screens.PaymentCardScreen
 import com.marketplace.ui.screens.RegisterScreen
 import com.marketplace.ui.screens.RejoinScreen
@@ -254,8 +255,17 @@ fun AppNavGraph() {
                 studentName = Session.name,
                 onBackClick = rememberSingleClick { navController.popBackStack() },
                 onBookingSuccess = {
-                    navController.navigate("booking_success") {
-                        popUpTo("book_teacher/$teacherId") { inclusive = true }
+                    val contactId = Session.pendingContactId
+                    if (contactId.isNotEmpty()) {
+                        Session.pendingContactId = ""
+                        Session.pendingCallName = Session.pendingTeacherName
+                        navController.navigate("chat/$contactId/${Session.userId}") {
+                            popUpTo("book_teacher/$teacherId") { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate("booking_success") {
+                            popUpTo("book_teacher/$teacherId") { inclusive = true }
+                        }
                     }
                 }
             )
@@ -458,13 +468,28 @@ fun AppNavGraph() {
                 bookingId              = bookingId,
                 teacherId              = teacherId,
                 teacherName            = teacherName,
-                onHappyContactUnlocked = { navController.navigateHome() },
+                onHappyContactUnlocked = {
+                    Session.pendingTeacherName = teacherName
+                    navController.navigate("post_trial/$teacherId")
+                },
                 onNotHappy             = {
                     Session.lastSearchResults = Session.lastSearchResults.filter { it.id != teacherId }
                     navController.navigate("not_happy_funnel") {
                         popUpTo("login") { inclusive = false }
                     }
                 }
+            )
+        }
+
+        composable(
+            route = "post_trial/{teacherId}",
+            arguments = listOf(navArgument("teacherId") { type = NavType.StringType })
+        ) { back ->
+            val teacherId = back.arguments?.getString("teacherId") ?: ""
+            PostTrialScreen(
+                teacherName = Session.pendingTeacherName,
+                onBookNow   = { navController.navigate("book_teacher/$teacherId") },
+                onBookLater = { navController.navigateHome() }
             )
         }
 

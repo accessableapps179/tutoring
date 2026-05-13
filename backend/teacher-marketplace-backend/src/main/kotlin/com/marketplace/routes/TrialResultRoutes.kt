@@ -32,7 +32,8 @@ data class TrialResultResponse(
     val bookingId: String,
     val happy: Boolean,
     val timestamp: Long,
-    val contactUnlocked: Boolean
+    val contactUnlocked: Boolean,
+    val contactId: String? = null
 )
 
 @Serializable
@@ -111,6 +112,7 @@ fun Application.trialResultRoutes() {
                     )
 
                     var contactUnlocked = false
+                    var contactId: String? = null
 
                     if (request.happy) {
                         // Unlock contact
@@ -125,6 +127,7 @@ fun Application.trialResultRoutes() {
                             contactService.acceptContactByStudentAndTeacher(studentId, request.teacherId)
                             contactUnlocked = true
                         }
+                        contactId = contactService.getContactBetween(studentId, request.teacherId)?.id
                     }
 
                     call.respond(
@@ -136,7 +139,8 @@ fun Application.trialResultRoutes() {
                             bookingId       = result.bookingId,
                             happy           = result.happy,
                             timestamp       = result.timestamp,
-                            contactUnlocked = contactUnlocked
+                            contactUnlocked = contactUnlocked,
+                            contactId       = contactId
                         )
                     )
                 }
