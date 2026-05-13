@@ -25,6 +25,7 @@ class BookingRepository {
             it[status] = booking.status
             it[slotDate] = booking.slotDate
             it[slotHour] = booking.slotHour
+            it[durationSlots] = booking.durationSlots
         }
         booking
     }
@@ -66,7 +67,8 @@ class BookingRepository {
             message = row[BookingTable.message],
             status = row[BookingTable.status],
             slotDate = row[BookingTable.slotDate],
-            slotHour = row[BookingTable.slotHour]
+            slotHour = row[BookingTable.slotHour],
+            durationSlots = row[BookingTable.durationSlots]
         )
     }
 }

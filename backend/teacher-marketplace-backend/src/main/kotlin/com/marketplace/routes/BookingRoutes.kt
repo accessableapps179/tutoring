@@ -18,7 +18,8 @@ data class CreateBookingRequest(
     val studentName: String,
     val message: String,
     val slotDate: String,
-    val slotHour: Double
+    val slotHour: Double,
+    val durationSlots: Int = 1
 )
 
 @Serializable
@@ -57,7 +58,8 @@ fun Application.bookingRoutes() {
                             studentName = request.studentName,
                             message = request.message,
                             slotDate = request.slotDate,
-                            slotHour = request.slotHour
+                            slotHour = request.slotHour,
+                            durationSlots = request.durationSlots
                         )
                         call.respond(HttpStatusCode.Created, booking)
                     } catch (e: IllegalArgumentException) {

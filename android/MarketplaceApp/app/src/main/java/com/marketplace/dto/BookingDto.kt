@@ -14,7 +14,8 @@ data class BookingDto(
     val message: String,
     val status: String,
     val slotDate: String = "",
-    val slotHour: Double = 0.0
+    val slotHour: Double = 0.0,
+    val durationSlots: Int = 1
 )
 
 @Serializable
@@ -23,7 +24,8 @@ data class CreateBookingRequest(
     val studentName: String,
     val message: String,
     val slotDate: String,
-    val slotHour: Double
+    val slotHour: Double,
+    val durationSlots: Int = 1
 )
 
 @Serializable

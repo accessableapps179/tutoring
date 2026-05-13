@@ -190,17 +190,26 @@ class AvailabilityService(
 
         val othersBookedHours = teacherBookings
             .filter { it.studentId != studentId }
-            .map { it.slotHour }
+            .flatMap { b ->
+                if (b.durationSlots >= 2) listOf(b.slotHour, b.slotHour + 0.5)
+                else listOf(b.slotHour)
+            }
             .toSet()
 
         val myBookingsElsewhere = bookingRepository.findByStudentId(studentId)
             .filter { it.slotDate == date && it.status != "CANCELLED" && it.teacherId != teacherId }
-            .map { it.slotHour }
+            .flatMap { b ->
+                if (b.durationSlots >= 2) listOf(b.slotHour, b.slotHour + 0.5)
+                else listOf(b.slotHour)
+            }
             .toSet()
 
         val myBookedHoursWithThisTeacher = teacherBookings
             .filter { it.studentId == studentId }
-            .map { it.slotHour }
+            .flatMap { b ->
+                if (b.durationSlots >= 2) listOf(b.slotHour, b.slotHour + 0.5)
+                else listOf(b.slotHour)
+            }
             .toSet()
 
         return weeklySlots

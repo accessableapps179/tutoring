@@ -14,5 +14,6 @@ data class Booking(
     val message: String,
     val status: String = "PENDING",
     val slotDate: String = "",
-    val slotHour: Double = 0.0
+    val slotHour: Double = 0.0,
+    val durationSlots: Int = 1
 )

@@ -16,7 +16,8 @@ class BookingRepository {
         studentName: String,
         message: String,
         slotDate: String = "",
-        slotHour: Double = 0.0
+        slotHour: Double = 0.0,
+        durationSlots: Int = 1
     ): Result<BookingDto> {
         return try {
             val booking = api.createBooking(
@@ -25,7 +26,8 @@ class BookingRepository {
                     studentName = studentName,
                     message = message,
                     slotDate = slotDate,
-                    slotHour = slotHour
+                    slotHour = slotHour,
+                    durationSlots = durationSlots
                 )
             )
             Result.success(booking)

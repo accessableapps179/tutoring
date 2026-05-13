@@ -76,7 +76,7 @@ fun TeacherListScreen(
     onManageAvailabilityClick: () -> Unit = {},
     onMessagesClick: () -> Unit = {},
     onMyAccountClick: () -> Unit = {},
-    onMyTutorClick: (teacherId: String, teacherName: String) -> Unit = { _, _ -> },
+    onMyTutorClick: (teacherId: String, teacherName: String, contactId: String) -> Unit = { _, _, _ -> },
     onLogoutClick: () -> Unit = {},
     viewModel: TeacherViewModel = viewModel(),
     messageViewModel: MessageViewModel,
@@ -354,7 +354,7 @@ fun TeacherListScreen(
                                 )
                                 acceptedContacts.forEach { contact ->
                                     Button(
-                                        onClick = { onMyTutorClick(contact.teacherId, contact.teacherName) },
+                                        onClick = { onMyTutorClick(contact.teacherId, contact.teacherName, contact.id) },
                                         modifier = Modifier.fillMaxWidth(),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = MaterialTheme.colorScheme.secondaryContainer,

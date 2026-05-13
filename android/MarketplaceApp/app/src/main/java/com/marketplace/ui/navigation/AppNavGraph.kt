@@ -144,8 +144,9 @@ fun AppNavGraph() {
                     if (role == "STUDENT") navController.navigate("my_lessons/$userId")
                     else navController.navigate("my_bookings/$role")
                 },
-                onMyTutorClick = { teacherId, teacherName ->
+                onMyTutorClick = { teacherId, teacherName, contactId ->
                     Session.pendingTeacherName = teacherName
+                    Session.pendingContactId = contactId
                     navController.navigate("book_teacher/$teacherId")
                 },
                 onManageProfileClick      = { navController.navigate("teacher_profile/$userId") },
@@ -184,8 +185,8 @@ fun AppNavGraph() {
                 onBackClick          = rememberSingleClick { navController.popBackStack() },
                 onBookClick          = if (Session.role == "STUDENT") {
                     {
-                        // Store name in Session — safe, no URL encoding needed
                         Session.pendingTeacherName = teacher.name
+                        Session.pendingContactId = ""
                         navController.navigate("book_teacher/${teacher.id}")
                     }
                 } else null,

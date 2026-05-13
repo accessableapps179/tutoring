@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.marketplace.Session
 import com.marketplace.dto.AvailableSlotDto
 import com.marketplace.viewmodel.AvailabilityViewModel
 import com.marketplace.viewmodel.BookingViewModel
@@ -55,6 +57,25 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
+
+private data class SlotPair(val first: AvailableSlotDto, val second: AvailableSlotDto)
+
+private fun buildSlotPairs(slots: List<AvailableSlotDto>): List<SlotPair> {
+    val sorted = slots.sortedBy { it.hour }
+    val result = mutableListOf<SlotPair>()
+    var i = 0
+    while (i < sorted.size) {
+        val cur = sorted[i]
+        val nxt = sorted.getOrNull(i + 1)
+        if (nxt != null && nxt.hour == cur.hour + 0.5 && !cur.isBooked && !nxt.isBooked) {
+            result.add(SlotPair(cur, nxt))
+            i += 2
+        } else {
+            i++
+        }
+    }
+    return result
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,6 +93,9 @@ fun SlotBookingScreen(
     val isLoading by availabilityViewModel.isLoading.collectAsState()
     val bookingSuccess by bookingViewModel.bookingSuccess.collectAsState()
     val isBookingLoading by bookingViewModel.isLoading.collectAsState()
+
+    val isPostTrial = Session.pendingContactId.isNotEmpty()
+    var selectedDuration by remember { mutableStateOf(1) }
 
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var weekOffset by remember { mutableStateOf(0) }
@@ -104,15 +128,18 @@ fun SlotBookingScreen(
         }
     }
 
+    val isDoubleMode = isPostTrial && selectedDuration == 2
+    val slotPairs = remember(availableSlots, isDoubleMode) {
+        if (isDoubleMode) buildSlotPairs(availableSlots) else emptyList()
+    }
+    val selectedPair = if (isDoubleMode && selectedSlot != null) {
+        slotPairs.firstOrNull { it.first.hour == selectedSlot!!.hour }
+    } else null
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "Book with $teacherName",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
+                title = { Text(text = "Book with $teacherName", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -137,52 +164,95 @@ fun SlotBookingScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Duration toggle — only for repeat (post-trial) bookings
+            if (isPostTrial) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                if (selectedDuration == 1) MaterialTheme.colorScheme.primary
+                                else Color.Transparent
+                            )
+                            .clickable {
+                                selectedDuration = 1
+                                availabilityViewModel.clearSelectedSlot()
+                            }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "25 min",
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedDuration == 1) MaterialTheme.colorScheme.onPrimary
+                                    else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                if (selectedDuration == 2) MaterialTheme.colorScheme.primary
+                                else Color.Transparent
+                            )
+                            .clickable {
+                                selectedDuration = 2
+                                availabilityViewModel.clearSelectedSlot()
+                            }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "50 min",
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedDuration == 2) MaterialTheme.colorScheme.onPrimary
+                                    else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+
+            // Week navigation
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = { if (weekOffset > 0) weekOffset-- },
-                    enabled = weekOffset > 0
-                ) {
+                IconButton(onClick = { if (weekOffset > 0) weekOffset-- }, enabled = weekOffset > 0) {
                     Icon(
                         imageVector = Icons.Filled.ChevronLeft,
                         contentDescription = "Previous week",
                         tint = if (weekOffset > 0) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outline
+                               else MaterialTheme.colorScheme.outline
                     )
                 }
-
                 Text(
                     text = "${weekStart.format(DateTimeFormatter.ofPattern("d MMM"))} — " +
                             "${weekStart.plusDays(6).format(DateTimeFormatter.ofPattern("d MMM yyyy"))}",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
-
-                IconButton(
-                    onClick = { if (weekOffset < 1) weekOffset++ },
-                    enabled = weekOffset < 1
-                ) {
+                IconButton(onClick = { if (weekOffset < 1) weekOffset++ }, enabled = weekOffset < 1) {
                     Icon(
                         imageVector = Icons.Filled.ChevronRight,
                         contentDescription = "Next week",
                         tint = if (weekOffset < 1) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outline
+                               else MaterialTheme.colorScheme.outline
                     )
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
+            // Day selector
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 weekDays.forEach { date ->
                     val isSelected = date == selectedDate
                     val isPast = date.isBefore(today)
                     val dayName = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-                    val dayNum = date.dayOfMonth
 
                     Column(
                         modifier = Modifier
@@ -209,7 +279,7 @@ fun SlotBookingScreen(
                             }
                         )
                         Text(
-                            text = "$dayNum",
+                            text = "${date.dayOfMonth}",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = when {
@@ -222,18 +292,15 @@ fun SlotBookingScreen(
                 }
             }
 
-            val selectedDayName = selectedDate.dayOfWeek.getDisplayName(
-                TextStyle.FULL, Locale.getDefault()
-            )
-            val selectedDateFormatted = selectedDate.format(
-                DateTimeFormatter.ofPattern("d MMMM yyyy")
-            )
+            val selectedDayName = selectedDate.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
+            val selectedDateFormatted = selectedDate.format(DateTimeFormatter.ofPattern("d MMMM yyyy"))
             Text(
                 text = "$selectedDayName, $selectedDateFormatted",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
+            // Slot grid
             if (isLoading) {
                 Text(
                     text = "Loading slots...",
@@ -256,6 +323,71 @@ fun SlotBookingScreen(
                         textAlign = TextAlign.Center
                     )
                 }
+            } else if (isDoubleMode) {
+                if (slotPairs.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No consecutive slots available for 50 min",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.outline,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        slotPairs.chunked(2).forEach { rowPairs ->
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                rowPairs.forEach { pair ->
+                                    val isSelected = selectedPair == pair
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .border(
+                                                width = 2.dp,
+                                                color = if (isSelected) MaterialTheme.colorScheme.primary
+                                                        else Color.Black,
+                                                shape = RoundedCornerShape(12.dp)
+                                            )
+                                            .clickable {
+                                                availabilityViewModel.selectSlot(pair.first)
+                                            }
+                                            .padding(4.dp)
+                                    ) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            PairSlotBox(
+                                                time = formatSlotTime(pair.first.hour),
+                                                isSelected = isSelected,
+                                                modifier = Modifier.weight(1f).height(44.dp)
+                                            )
+                                            PairSlotBox(
+                                                time = formatSlotTime(pair.second.hour),
+                                                isSelected = isSelected,
+                                                modifier = Modifier.weight(1f).height(44.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                                if (rowPairs.size == 1) {
+                                    Box(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+                }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     availableSlots.chunked(4).forEach { rowSlots ->
@@ -276,6 +408,7 @@ fun SlotBookingScreen(
                 }
             }
 
+            // Selection summary
             if (selectedSlot != null) {
                 val slot = selectedSlot!!
 
@@ -287,12 +420,45 @@ fun SlotBookingScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = "Selected: ${formatSlotRange(slot.hour)}",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    if (isDoubleMode && selectedPair != null) {
+                        Text(
+                            text = "Selected:",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Box(
+                            modifier = Modifier
+                                .border(
+                                    2.dp,
+                                    MaterialTheme.colorScheme.onPrimaryContainer,
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Column {
+                                Text(
+                                    text = formatSlotTime(selectedPair.first.hour),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Text(
+                                    text = formatSlotTime(selectedPair.second.hour),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = "Selected: ${formatSlotRange(slot.hour)}",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                     Text(
                         text = selectedDateFormatted,
                         style = MaterialTheme.typography.bodySmall,
@@ -308,7 +474,8 @@ fun SlotBookingScreen(
                                 studentName = studentName,
                                 message = "Booking request",
                                 slotDate = slot.date,
-                                slotHour = slot.hour
+                                slotHour = slot.hour,
+                                durationSlots = selectedDuration
                             )
                         }
                     },
@@ -337,12 +504,31 @@ fun SlotBookingScreen(
             ) {
                 SlotLegendItem(color = Color(0xFF4CAF50), label = "Available")
                 SlotLegendItem(color = Color(0xFFE53935), label = "Your booking")
-                SlotLegendItem(
-                    color = MaterialTheme.colorScheme.primary,
-                    label = "Selected"
-                )
+                SlotLegendItem(color = MaterialTheme.colorScheme.primary, label = "Selected")
             }
         }
+    }
+}
+
+@Composable
+private fun PairSlotBox(time: String, isSelected: Boolean, modifier: Modifier = Modifier) {
+    val bgColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFF4CAF50),
+        animationSpec = tween(200),
+        label = "pairSlotColor"
+    )
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(bgColor),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = time,
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp,
+            color = Color.White
+        )
     }
 }
 

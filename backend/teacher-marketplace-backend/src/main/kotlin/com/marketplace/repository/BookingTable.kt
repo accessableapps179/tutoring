@@ -14,4 +14,5 @@ object BookingTable : IdTable<String>("bookings") {
     val status = varchar("status", 50).default("PENDING")
     val slotDate = varchar("slot_date", 20).default("")
     val slotHour = double("slot_hour").default(0.0)
+    val durationSlots = integer("duration_slots").default(1)
 }

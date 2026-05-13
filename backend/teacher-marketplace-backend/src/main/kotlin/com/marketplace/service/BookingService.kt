@@ -19,7 +19,8 @@ class BookingService(
         studentName: String,
         message: String,
         slotDate: String,
-        slotHour: Double
+        slotHour: Double,
+        durationSlots: Int = 1
     ): Booking {
         require(message.isNotBlank()) { "Message cannot be empty" }
         require(slotDate.isNotBlank()) { "Slot date cannot be empty" }
@@ -39,7 +40,8 @@ class BookingService(
             message = message,
             status = status,
             slotDate = slotDate,
-            slotHour = slotHour
+            slotHour = slotHour,
+            durationSlots = durationSlots
         )
         return repository.save(booking)
     }

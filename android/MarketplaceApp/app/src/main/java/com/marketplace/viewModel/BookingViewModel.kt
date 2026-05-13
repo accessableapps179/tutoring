@@ -34,7 +34,8 @@ class BookingViewModel : ViewModel() {
         studentName: String,
         message: String,
         slotDate: String = "",
-        slotHour: Double = 0.0
+        slotHour: Double = 0.0,
+        durationSlots: Int = 1
     ) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -46,7 +47,8 @@ class BookingViewModel : ViewModel() {
                 studentName = studentName,
                 message = message,
                 slotDate = slotDate,
-                slotHour = slotHour
+                slotHour = slotHour,
+                durationSlots = durationSlots
             )
 
             if (result.isSuccess) {
