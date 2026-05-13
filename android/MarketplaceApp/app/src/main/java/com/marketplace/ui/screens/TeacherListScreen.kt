@@ -234,110 +234,77 @@ fun TeacherListScreen(
                             }
                             Column(
                                 modifier = Modifier
-                                    .padding(16.dp)
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
                                     .fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                // Live clock
-                                Text(
-                                    text = displayTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")),
-                                    style = MaterialTheme.typography.displaySmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                Text(
-                                    text = displayTime.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy")),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                // Date adjuster
+                                // Date row with prev/next arrows
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.Center
                                 ) {
                                     IconButton(onClick = { applyOverride(pickerDateTime.minusDays(1)) }) {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                            contentDescription = "Previous day",
-                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                        )
+                                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Previous day", tint = MaterialTheme.colorScheme.onPrimaryContainer)
                                     }
                                     Text(
-                                        text = pickerDateTime.format(DateTimeFormatter.ofPattern("d MMM yyyy")),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 8.dp),
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                    IconButton(onClick = { applyOverride(pickerDateTime.plusDays(1)) }) {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                            contentDescription = "Next day",
-                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                        )
-                                    }
-                                }
-                                // Hour and minute adjusters
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    // Hours
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        IconButton(onClick = { applyOverride(pickerDateTime.plusHours(1)) }) {
-                                            Icon(
-                                                imageVector = Icons.Filled.KeyboardArrowUp,
-                                                contentDescription = "Hour up",
-                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
-                                        }
-                                        Text(
-                                            text = pickerDateTime.format(DateTimeFormatter.ofPattern("HH")),
-                                            style = MaterialTheme.typography.headlineMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                                        )
-                                        IconButton(onClick = { applyOverride(pickerDateTime.minusHours(1)) }) {
-                                            Icon(
-                                                imageVector = Icons.Filled.KeyboardArrowDown,
-                                                contentDescription = "Hour down",
-                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
-                                        }
-                                    }
-                                    Text(
-                                        text = ":",
-                                        style = MaterialTheme.typography.headlineMedium,
+                                        text = displayTime.format(DateTimeFormatter.ofPattern("EEEE, d MMM yyyy")),
+                                        style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                                         modifier = Modifier.padding(horizontal = 4.dp)
                                     )
-                                    // Minutes
+                                    IconButton(onClick = { applyOverride(pickerDateTime.plusDays(1)) }) {
+                                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next day", tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    }
+                                }
+                                // Clock with up/down arrows on hours and minutes
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        IconButton(onClick = { applyOverride(pickerDateTime.plusMinutes(1)) }) {
-                                            Icon(
-                                                imageVector = Icons.Filled.KeyboardArrowUp,
-                                                contentDescription = "Minute up",
-                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
+                                        IconButton(onClick = { applyOverride(pickerDateTime.plusHours(1)) }) {
+                                            Icon(Icons.Filled.KeyboardArrowUp, "Hour up", tint = MaterialTheme.colorScheme.onPrimaryContainer)
                                         }
                                         Text(
-                                            text = pickerDateTime.format(DateTimeFormatter.ofPattern("mm")),
-                                            style = MaterialTheme.typography.headlineMedium,
+                                            text = displayTime.format(DateTimeFormatter.ofPattern("HH")),
+                                            style = MaterialTheme.typography.displaySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                        IconButton(onClick = { applyOverride(pickerDateTime.minusHours(1)) }) {
+                                            Icon(Icons.Filled.KeyboardArrowDown, "Hour down", tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                                        }
+                                    }
+                                    Text(
+                                        text = ":",
+                                        style = MaterialTheme.typography.displaySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.padding(horizontal = 2.dp)
+                                    )
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        IconButton(onClick = { applyOverride(pickerDateTime.plusMinutes(1)) }) {
+                                            Icon(Icons.Filled.KeyboardArrowUp, "Minute up", tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                                        }
+                                        Text(
+                                            text = displayTime.format(DateTimeFormatter.ofPattern("mm")),
+                                            style = MaterialTheme.typography.displaySmall,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onPrimaryContainer
                                         )
                                         IconButton(onClick = { applyOverride(pickerDateTime.minusMinutes(1)) }) {
-                                            Icon(
-                                                imageVector = Icons.Filled.KeyboardArrowDown,
-                                                contentDescription = "Minute down",
-                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
+                                            Icon(Icons.Filled.KeyboardArrowDown, "Minute down", tint = MaterialTheme.colorScheme.onPrimaryContainer)
                                         }
                                     }
+                                    Text(
+                                        text = ":" + displayTime.format(DateTimeFormatter.ofPattern("ss")),
+                                        style = MaterialTheme.typography.displaySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
+                                        modifier = Modifier.padding(start = 2.dp)
+                                    )
                                 }
-                                // Reset — only visible when override is active
                                 if (debugOverrideActive) {
                                     TextButton(
                                         onClick = {
@@ -346,10 +313,7 @@ fun TeacherListScreen(
                                         },
                                         modifier = Modifier.align(Alignment.End)
                                     ) {
-                                        Text(
-                                            text = "Reset to system time",
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                                        )
+                                        Text("Reset to system time", color = MaterialTheme.colorScheme.onPrimaryContainer)
                                     }
                                 }
                             }
