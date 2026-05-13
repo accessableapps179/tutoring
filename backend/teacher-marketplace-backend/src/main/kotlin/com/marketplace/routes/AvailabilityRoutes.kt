@@ -171,7 +171,7 @@ fun Application.availabilityRoutes() {
                     "Unauthorized", status = HttpStatusCode.Unauthorized
                 )
                 availabilityService.nukePlatonicSlots(teacherId)
-                call.respond(HttpStatusCode.NoContent)
+                call.respond(mapOf("ok" to true))
             }
 
             get("/platonic-slots") {

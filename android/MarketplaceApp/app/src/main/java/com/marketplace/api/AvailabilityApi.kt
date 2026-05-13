@@ -55,7 +55,7 @@ interface AvailabilityApi {
     ): TeacherHourRangeDto
 
     @DELETE("platonic-slots")
-    suspend fun nukePlatonicSlots()
+    suspend fun nukePlatonicSlots(): Map<String, Boolean>
 
     @GET("platonic-slots")
     suspend fun getPlatonicSlots(): List<PlatonicSlotDto>

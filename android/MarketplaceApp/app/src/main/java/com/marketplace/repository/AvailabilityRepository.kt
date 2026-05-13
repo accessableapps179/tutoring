@@ -98,6 +98,7 @@ class AvailabilityRepository {
         catch (e: Exception) { Result.failure(e) }
     }
 
+
     suspend fun getPlatonicSlots(): Result<List<PlatonicSlotDto>> {
         return try { Result.success(api.getPlatonicSlots()) }
         catch (e: Exception) { Result.failure(e) }
