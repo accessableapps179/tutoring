@@ -7,7 +7,6 @@ import com.marketplace.domain.WeeklySlot
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
@@ -146,13 +145,15 @@ class AvailabilityRepository {
                 (AvailabilityOverrideTable.date eq date)
             }
         }
-        // Bulk-insert all new overrides in the same transaction
-        AvailabilityOverrideTable.batchInsert(newOverrides) { o ->
-            this[AvailabilityOverrideTable.id]          = o.id
-            this[AvailabilityOverrideTable.teacherId]   = o.teacherId
-            this[AvailabilityOverrideTable.date]        = o.date
-            this[AvailabilityOverrideTable.hour]        = o.hour
-            this[AvailabilityOverrideTable.isAvailable] = o.isAvailable
+        // Insert all new overrides in the same transaction
+        for (o in newOverrides) {
+            AvailabilityOverrideTable.insert {
+                it[id]          = o.id
+                it[teacherId]   = o.teacherId
+                it[date]        = o.date
+                it[hour]        = o.hour
+                it[isAvailable] = o.isAvailable
+            }
         }
     }
 
