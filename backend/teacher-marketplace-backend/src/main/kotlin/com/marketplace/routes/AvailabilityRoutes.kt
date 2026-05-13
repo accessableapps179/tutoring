@@ -165,6 +165,15 @@ fun Application.availabilityRoutes() {
                 call.respond(mapOf("isAvailable" to isNowAvailable))
             }
 
+            delete("/platonic-slots") {
+                val principal = call.principal<JWTPrincipal>()
+                val teacherId = principal?.payload?.subject ?: return@delete call.respondText(
+                    "Unauthorized", status = HttpStatusCode.Unauthorized
+                )
+                availabilityService.nukePlatonicSlots(teacherId)
+                call.respond(HttpStatusCode.NoContent)
+            }
+
             get("/platonic-slots") {
                 val principal = call.principal<JWTPrincipal>()
                 val teacherId = principal?.payload?.subject ?: return@get call.respondText(

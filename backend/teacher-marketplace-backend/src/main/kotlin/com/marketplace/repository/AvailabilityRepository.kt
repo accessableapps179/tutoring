@@ -183,6 +183,10 @@ class AvailabilityRepository {
         slot
     }
 
+    fun deleteAllPlatonicSlots(teacherId: String) = transaction {
+        PlatonicSlotTable.deleteWhere { PlatonicSlotTable.teacherId eq teacherId }
+    }
+
     fun deletePlatonicSlot(
         teacherId: String,
         weekNumber: Int,

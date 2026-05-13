@@ -241,6 +241,9 @@ class AvailabilityService(
     fun getPlatonicSlots(teacherId: String): List<PlatonicSlot> =
         availabilityRepository.getPlatonicSlots(teacherId)
 
+    fun nukePlatonicSlots(teacherId: String) =
+        availabilityRepository.deleteAllPlatonicSlots(teacherId)
+
     fun togglePlatonicSlot(
         teacherId:  String,
         weekNumber: Int,

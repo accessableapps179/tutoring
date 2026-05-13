@@ -25,6 +25,14 @@ class PlatonicAvailabilityViewModel : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
+    fun nuke() {
+        viewModelScope.launch {
+            repository.nukePlatonicSlots().onSuccess {
+                _platonicSlots.value = emptyList()
+            }
+        }
+    }
+
     fun load() {
         viewModelScope.launch {
             _isLoading.value = true

@@ -13,6 +13,7 @@ import com.marketplace.dto.ToggleResponse
 import com.marketplace.dto.ToggleWeeklySlotRequest
 import com.marketplace.dto.WeeklySlotDto
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -52,6 +53,9 @@ interface AvailabilityApi {
     suspend fun saveHourRange(
         @Body request: HourRangeRequest
     ): TeacherHourRangeDto
+
+    @DELETE("platonic-slots")
+    suspend fun nukePlatonicSlots()
 
     @GET("platonic-slots")
     suspend fun getPlatonicSlots(): List<PlatonicSlotDto>

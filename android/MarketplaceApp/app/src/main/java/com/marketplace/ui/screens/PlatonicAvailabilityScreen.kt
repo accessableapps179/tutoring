@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,6 +29,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -68,7 +70,8 @@ fun PlatonicAvailabilityScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val stampDone by viewModel.stampDone.collectAsState()
 
-    var selectedCell by remember { mutableStateOf<Pair<Int, Int>?>(null) } // weekNumber to dayOfWeek
+    var selectedCell  by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var showNukeConfirm by remember { mutableStateOf(false) }
 
     val today = LocalDate.now()
     val stampYear  = today.year
@@ -76,6 +79,23 @@ fun PlatonicAvailabilityScreen(
     val monthName  = today.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
 
     LaunchedEffect(Unit) { viewModel.load() }
+
+    if (showNukeConfirm) {
+        AlertDialog(
+            onDismissRequest = { showNukeConfirm = false },
+            title = { Text("Clear template?", fontWeight = FontWeight.Bold) },
+            text  = { Text("This removes all slots from your template. Existing bookings are not affected.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showNukeConfirm = false
+                    viewModel.nuke()
+                }) { Text("Clear", color = Color(0xFFE65100)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNukeConfirm = false }) { Text("Cancel") }
+            }
+        )
+    }
 
     // Pre-build a lookup: (weekNumber, dayOfWeek) -> set of hours
     val slotMap: Map<Pair<Int, Int>, Set<Double>> = slots.groupBy { Pair(it.weekNumber, it.dayOfWeek) }
@@ -114,18 +134,30 @@ fun PlatonicAvailabilityScreen(
                     CircularProgressIndicator()
                 }
             } else {
-                // ─── Stamp button ─────────────────────────────────────
-                Button(
-                    onClick = {
-                        viewModel.stampMonth(stampYear, stampMonth)
-                        onStampComplete()
-                    },
+                // ─── Nuke + Stamp buttons ─────────────────────────────
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Stamp to $monthName $stampYear")
+                    Button(
+                        onClick = { showNukeConfirm = true },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))
+                    ) {
+                        Text("Nuke")
+                    }
+                    Button(
+                        onClick = {
+                            viewModel.stampMonth(stampYear, stampMonth)
+                            onStampComplete()
+                        },
+                        modifier = Modifier.weight(2f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text("Stamp to $monthName $stampYear")
+                    }
                 }
 
                 // ─── Grid header ──────────────────────────────────────
