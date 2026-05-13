@@ -275,32 +275,42 @@ class AvailabilityService(
             .map { Triple(it.weekNumber, it.dayOfWeek, it.hour) }
             .toSet()
 
-        // Fetch all teacher bookings once — avoids N DB calls inside the loop
-        val allBookings = bookingRepository.findByTeacherId(teacherId)
+        // Fetch all live bookings for this teacher once
+        val firstDateStr = firstDay.format(dateFormatter)
+        val lastDateStr  = lastDay.format(dateFormatter)
+        val allBookings  = bookingRepository.findByTeacherId(teacherId)
             .filter { it.status == "PENDING" || it.status == "CONFIRMED" }
+            .filter { it.slotDate in firstDateStr..lastDateStr }
 
-        val conflicts      = mutableListOf<StampConflict>()
-        var slotsWritten   = 0
+        // Build the full list of dates and a per-date map of live-booking hours
+        val allDates = mutableListOf<String>()
+        val preservedHoursByDate = mutableMapOf<String, Set<Double>>()
+        var d = firstDay
+        while (!d.isAfter(lastDay)) {
+            val ds = d.format(dateFormatter)
+            allDates.add(ds)
+            val liveHours = allBookings.filter { it.slotDate == ds }.map { it.slotHour }.toSet()
+            if (liveHours.isNotEmpty()) preservedHoursByDate[ds] = liveHours
+            d = d.plusDays(1)
+        }
 
-        var current = firstDay
-        while (!current.isAfter(lastDay)) {
-            val dayOfWeek  = current.dayOfWeek.value
-            val weekNumber = minOf(4, (current.dayOfMonth - 1) / 7 + 1)
-            val dateStr    = current.format(dateFormatter)
+        // Build all overrides to write, and collect conflicts — pure in-memory
+        val newOverrides = mutableListOf<AvailabilityOverride>()
+        val conflicts    = mutableListOf<StampConflict>()
 
-            val liveBookingHours = allBookings
-                .filter { it.slotDate == dateStr }
-                .map { it.slotHour }
-                .toSet()
+        for (dateStr in allDates) {
+            val localDate  = LocalDate.parse(dateStr, dateFormatter)
+            val dayOfWeek  = localDate.dayOfWeek.value
+            val weekNumber = minOf(4, (localDate.dayOfMonth - 1) / 7 + 1)
+            val liveHours  = preservedHoursByDate[dateStr] ?: emptySet()
 
             var h = 0.0
             while (h < 24.0) {
                 val pagSaysOn = Triple(weekNumber, dayOfWeek, h) in pagSet
-
-                if (h in liveBookingHours) {
+                if (h in liveHours) {
                     if (!pagSaysOn) conflicts.add(StampConflict(date = dateStr, hour = h))
                 } else {
-                    availabilityRepository.saveOverride(
+                    newOverrides.add(
                         AvailabilityOverride(
                             id          = UUID.randomUUID().toString(),
                             teacherId   = teacherId,
@@ -309,14 +319,20 @@ class AvailabilityService(
                             isAvailable = pagSaysOn
                         )
                     )
-                    slotsWritten++
                 }
                 h += 0.5
             }
-            current = current.plusDays(1)
         }
 
-        return StampResult(slotsWritten = slotsWritten, conflicts = conflicts)
+        // One bulk transaction: delete old overrides then batch-insert new ones
+        availabilityRepository.stampOverrides(
+            teacherId            = teacherId,
+            dates                = allDates,
+            preservedHoursByDate = preservedHoursByDate,
+            newOverrides         = newOverrides
+        )
+
+        return StampResult(slotsWritten = newOverrides.size, conflicts = conflicts)
     }
 
     fun saveHourRange(teacherId: String, startHour: Int, endHour: Int): TeacherHourRange {

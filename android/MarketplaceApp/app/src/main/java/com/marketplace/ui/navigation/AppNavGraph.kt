@@ -228,7 +228,8 @@ fun AppNavGraph() {
 
         composable("platonic_availability") {
             PlatonicAvailabilityScreen(
-                onBackClick = rememberSingleClick { navController.popBackStack() }
+                onBackClick      = rememberSingleClick { navController.popBackStack() },
+                onStampComplete  = { navController.popBackStack() }
             )
         }
 

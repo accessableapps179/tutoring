@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,7 +28,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -63,11 +61,12 @@ private val DAY_NAMES = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 @Composable
 fun PlatonicAvailabilityScreen(
     onBackClick: () -> Unit,
+    onStampComplete: () -> Unit = {},
     viewModel: PlatonicAvailabilityViewModel = viewModel()
 ) {
-    val slots      by viewModel.platonicSlots.collectAsState()
-    val isLoading  by viewModel.isLoading.collectAsState()
-    val stampResult by viewModel.stampResult.collectAsState()
+    val slots     by viewModel.platonicSlots.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val stampDone by viewModel.stampDone.collectAsState()
 
     var selectedCell by remember { mutableStateOf<Pair<Int, Int>?>(null) } // weekNumber to dayOfWeek
 
@@ -81,29 +80,6 @@ fun PlatonicAvailabilityScreen(
     // Pre-build a lookup: (weekNumber, dayOfWeek) -> set of hours
     val slotMap: Map<Pair<Int, Int>, Set<Double>> = slots.groupBy { Pair(it.weekNumber, it.dayOfWeek) }
         .mapValues { entry -> entry.value.map { it.hour }.toSet() }
-
-    if (stampResult != null) {
-        val result = stampResult!!
-        AlertDialog(
-            onDismissRequest = { viewModel.clearStampResult() },
-            title = { Text("Stamped to $monthName $stampYear", fontWeight = FontWeight.Bold) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("${result.slotsWritten} slot(s) applied.")
-                    if (result.conflicts.isNotEmpty()) {
-                        Text(
-                            "${result.conflicts.size} existing booking(s) were skipped — " +
-                            "they are flagged on your calendar.",
-                            color = Color(0xFFE65100)
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { viewModel.clearStampResult() }) { Text("OK") }
-            }
-        )
-    }
 
     Scaffold(
         topBar = {
@@ -138,6 +114,20 @@ fun PlatonicAvailabilityScreen(
                     CircularProgressIndicator()
                 }
             } else {
+                // ─── Stamp button ─────────────────────────────────────
+                Button(
+                    onClick = {
+                        viewModel.stampMonth(stampYear, stampMonth)
+                        onStampComplete()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Text("Stamp to $monthName $stampYear")
+                }
+
                 // ─── Grid header ──────────────────────────────────────
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -241,19 +231,6 @@ fun PlatonicAvailabilityScreen(
                             }
                         }
                     }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // ─── Stamp button ─────────────────────────────────────
-                Button(
-                    onClick = { viewModel.stampMonth(stampYear, stampMonth) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Text("Stamp to $monthName $stampYear")
                 }
 
                 Text(

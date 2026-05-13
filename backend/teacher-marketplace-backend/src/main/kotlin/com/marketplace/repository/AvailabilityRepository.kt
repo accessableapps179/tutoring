@@ -7,8 +7,10 @@ import com.marketplace.domain.WeeklySlot
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
@@ -130,6 +132,40 @@ class AvailabilityRepository {
     }
 
     // ─── Mappers ─────────────────────────────────────────────
+
+    // ─── Stamp (bulk, single transaction) ───────────────────
+
+    fun stampOverrides(
+        teacherId: String,
+        dates: List<String>,
+        preservedHoursByDate: Map<String, Set<Double>>,
+        newOverrides: List<AvailabilityOverride>
+    ) = transaction {
+        // Delete existing overrides for each date, keeping any that sit on a live booking
+        for (date in dates) {
+            val keep = preservedHoursByDate[date] ?: emptySet()
+            if (keep.isEmpty()) {
+                AvailabilityOverrideTable.deleteWhere {
+                    (AvailabilityOverrideTable.teacherId eq teacherId) and
+                    (AvailabilityOverrideTable.date eq date)
+                }
+            } else {
+                AvailabilityOverrideTable.deleteWhere {
+                    (AvailabilityOverrideTable.teacherId eq teacherId) and
+                    (AvailabilityOverrideTable.date eq date) and
+                    not(AvailabilityOverrideTable.hour.inList(keep.toList()))
+                }
+            }
+        }
+        // Bulk-insert all new overrides in the same transaction
+        AvailabilityOverrideTable.batchInsert(newOverrides) { o ->
+            this[AvailabilityOverrideTable.id]          = o.id
+            this[AvailabilityOverrideTable.teacherId]   = o.teacherId
+            this[AvailabilityOverrideTable.date]        = o.date
+            this[AvailabilityOverrideTable.hour]        = o.hour
+            this[AvailabilityOverrideTable.isAvailable] = o.isAvailable
+        }
+    }
 
     // ─── Platonic Slots ──────────────────────────────────────
 

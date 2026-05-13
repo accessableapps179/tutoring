@@ -19,8 +19,8 @@ class PlatonicAvailabilityViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val _stampResult = MutableStateFlow<StampMonthResponse?>(null)
-    val stampResult: StateFlow<StampMonthResponse?> = _stampResult
+    private val _stampDone = MutableStateFlow(false)
+    val stampDone: StateFlow<Boolean> = _stampDone
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
@@ -45,11 +45,9 @@ class PlatonicAvailabilityViewModel : ViewModel() {
         viewModelScope.launch {
             _isLoading.value = true
             repository.stampMonth(year, month)
-                .onSuccess  { _stampResult.value = it }
+                .onSuccess  { _stampDone.value = true }
                 .onFailure  { _errorMessage.value = "Stamp failed: ${it.message}" }
             _isLoading.value = false
         }
     }
-
-    fun clearStampResult() { _stampResult.value = null }
 }
