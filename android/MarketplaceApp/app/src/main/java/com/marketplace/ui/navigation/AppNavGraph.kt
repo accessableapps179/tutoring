@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.marketplace.Session
 import com.marketplace.ui.screens.AdminScreen
+import com.marketplace.ui.screens.BankDetailsScreen
 import com.marketplace.ui.screens.BookingSuccessScreen
 import com.marketplace.ui.screens.ChangePasswordScreen
 import com.marketplace.ui.screens.ChatScreen
@@ -18,6 +19,7 @@ import com.marketplace.ui.screens.LobbyScreen
 import com.marketplace.ui.screens.LoginScreen
 import com.marketplace.ui.screens.LogoutScreen
 import com.marketplace.ui.screens.MessagesListScreen
+import com.marketplace.ui.screens.MyAccountScreen
 import com.marketplace.ui.screens.MyBookingsScreen
 import com.marketplace.ui.screens.NotHappyFunnelScreen
 import com.marketplace.ui.screens.PostTrialScreen
@@ -148,14 +150,9 @@ fun AppNavGraph() {
                 },
                 onManageProfileClick      = { navController.navigate("teacher_profile/$userId") },
                 onManageAvailabilityClick = { navController.navigate("teacher_availability/$userId") },
-                onMessagesClick           = { navController.navigate("messages_list/$role/$userId") },
-                onPaymentCardClick        = { navController.navigate("payment_card") },
-                onBalanceClick = {
-                    if (role == "TEACHER") navController.navigate("teacher_balance")
-                    else navController.navigate("student_ledger")
-                },
-                onChangePasswordClick = { navController.navigate("change_password") },
-                onLogoutClick         = { navController.navigate("logout") },
+                onMessagesClick  = { navController.navigate("messages_list/$role/$userId") },
+                onMyAccountClick = { navController.navigate("my_account/$role") },
+                onLogoutClick    = { navController.navigate("logout") },
                 messageViewModel      = messageViewModel
             )
         }
@@ -509,6 +506,28 @@ fun AppNavGraph() {
         }
 
         // ─── Account / Finance ─────────────────────────────────────────────────
+
+        composable(
+            route = "my_account/{role}",
+            arguments = listOf(navArgument("role") { type = NavType.StringType })
+        ) { back ->
+            val role = back.arguments?.getString("role") ?: ""
+            MyAccountScreen(
+                role                  = role,
+                onBackClick           = rememberSingleClick { navController.popBackStack() },
+                onChangePasswordClick = { navController.navigate("change_password") },
+                onPaymentCardClick    = { navController.navigate("payment_card") },
+                onBankDetailsClick    = { navController.navigate("bank_details") },
+                onMyBalanceClick      = {
+                    if (role == "TEACHER") navController.navigate("teacher_balance")
+                    else navController.navigate("student_ledger")
+                }
+            )
+        }
+
+        composable("bank_details") {
+            BankDetailsScreen(onBackClick = rememberSingleClick { navController.popBackStack() })
+        }
 
         composable("payment_card") {
             PaymentCardScreen(onBackClick = rememberSingleClick { navController.popBackStack() })

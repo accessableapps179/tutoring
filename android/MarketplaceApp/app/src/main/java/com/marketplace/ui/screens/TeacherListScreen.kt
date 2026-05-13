@@ -75,10 +75,8 @@ fun TeacherListScreen(
     onManageProfileClick: () -> Unit = {},
     onManageAvailabilityClick: () -> Unit = {},
     onMessagesClick: () -> Unit = {},
-    onPaymentCardClick: () -> Unit = {},
-    onBalanceClick: () -> Unit = {},
+    onMyAccountClick: () -> Unit = {},
     onMyTutorClick: (teacherId: String, teacherName: String) -> Unit = { _, _ -> },
-    onChangePasswordClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     viewModel: TeacherViewModel = viewModel(),
     messageViewModel: MessageViewModel,
@@ -340,9 +338,6 @@ fun TeacherListScreen(
                             Button(onClick = onManageAvailabilityClick, modifier = Modifier.fillMaxWidth()) {
                                 Text(text = "Manage My Availability", fontWeight = FontWeight.Bold)
                             }
-                            Button(onClick = onBalanceClick, modifier = Modifier.fillMaxWidth()) {
-                                Text(text = "💰 My Balance", fontWeight = FontWeight.Bold)
-                            }
                         }
 
                         if (role == "STUDENT") {
@@ -370,24 +365,13 @@ fun TeacherListScreen(
                                     }
                                 }
                             }
-
-                            Button(onClick = onPaymentCardClick, modifier = Modifier.fillMaxWidth()) {
-                                Text(text = "Payment Card", fontWeight = FontWeight.Bold)
-                            }
-                            Button(onClick = onBalanceClick, modifier = Modifier.fillMaxWidth()) {
-                                Text(text = "My Account", fontWeight = FontWeight.Bold)
-                            }
                         }
 
                         Button(
-                            onClick = onChangePasswordClick,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            onClick = onMyAccountClick,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(text = "Change Password", fontWeight = FontWeight.Bold)
+                            Text(text = "My Account", fontWeight = FontWeight.Bold)
                         }
 
                         if (role == "STUDENT") {
