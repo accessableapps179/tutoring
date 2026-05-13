@@ -33,6 +33,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,15 +43,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.marketplace.Session
 import com.marketplace.dto.BookingDto
 import com.marketplace.dto.ContactDto
 import com.marketplace.viewmodel.BookingViewModel
 import com.marketplace.viewmodel.ContactViewModel
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,14 +70,23 @@ fun StudentBookingScreen(
     val errorMessage by bookingViewModel.errorMessage.collectAsState()
     val contacts by contactViewModel.contacts.collectAsState()
 
+    var now by remember { mutableStateOf(Session.currentDateTime()) }
+
     LaunchedEffect(Unit) {
         bookingViewModel.loadUpcomingBookings()
         contactViewModel.loadContacts()
     }
 
+    LaunchedEffect("clock") {
+        while (true) {
+            delay(30_000L)
+            now = Session.currentDateTime()
+        }
+    }
+
     // Fix 4: hide today's bookings whose slot has already ended
-    val today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-    val currentHour = LocalTime.now().let { it.hour + it.minute / 60.0 }
+    val today = now.toLocalDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+    val currentHour = now.hour + now.minute / 60.0
     val visibleBookings = upcomingBookings.filter { booking ->
         booking.slotDate != today || booking.slotHour + 1.0 > currentHour
     }
@@ -166,6 +181,7 @@ fun StudentBookingScreen(
                             UpcomingBookingCard(
                                 booking = booking,
                                 contacts = contacts,
+                                now = now,
                                 onStartVideoCall = onStartVideoCall,
                                 onStartRegularCall = onStartRegularCall
                             )
@@ -181,6 +197,7 @@ fun StudentBookingScreen(
 fun UpcomingBookingCard(
     booking: BookingDto,
     contacts: List<ContactDto>,
+    now: LocalDateTime,
     onStartVideoCall: (contactId: String, otherPersonName: String, bookingId: String, teacherId: String) -> Unit,
     onStartRegularCall: (contactId: String, otherPersonName: String) -> Unit
 ) {
@@ -280,36 +297,50 @@ fun UpcomingBookingCard(
             )
         }
 
-        // Video call button — trial lobby if no accepted contact, regular lobby if one exists
-        if (booking.status == "CONFIRMED") {
-            val acceptedContact = contacts.firstOrNull {
-                it.teacherId == booking.teacherId && it.status == "ACCEPTED"
+        // Video call button — visible only in the 10-min pre-window and during the lesson
+        if (booking.status == "CONFIRMED" && slotDate != null) {
+            val slotHourInt = booking.slotHour.toInt()
+            val slotMin = ((booking.slotHour - slotHourInt) * 60).toInt()
+            val lessonStart = LocalDateTime.of(slotDate, LocalTime.of(slotHourInt, slotMin))
+            val windowStart = lessonStart.minusMinutes(10)
+            val windowEnd   = lessonStart.plusHours(1)
+
+            val callLabel = when {
+                now >= windowStart && now < lessonStart -> "Lesson Starting Soon"
+                now >= lessonStart && now < windowEnd   -> "Lesson Started"
+                else -> null
             }
-            Button(
-                onClick = {
-                    val teacherDisplayName = booking.teacherName.ifBlank { "Teacher" }
-                    if (acceptedContact != null) {
-                        onStartRegularCall(booking.id, teacherDisplayName)
-                    } else {
-                        onStartVideoCall(booking.id, teacherDisplayName, booking.id, booking.teacherId)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1565C0)
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.VideoCall,
-                    contentDescription = null,
-                    modifier = Modifier.padding(end = 8.dp),
-                    tint = Color.White
-                )
-                Text(
-                    text = "Start Video Call",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+
+            if (callLabel != null) {
+                val acceptedContact = contacts.firstOrNull {
+                    it.teacherId == booking.teacherId && it.status == "ACCEPTED"
+                }
+                Button(
+                    onClick = {
+                        val teacherDisplayName = booking.teacherName.ifBlank { "Teacher" }
+                        if (acceptedContact != null) {
+                            onStartRegularCall(booking.id, teacherDisplayName)
+                        } else {
+                            onStartVideoCall(booking.id, teacherDisplayName, booking.id, booking.teacherId)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF1565C0)
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.VideoCall,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 8.dp),
+                        tint = Color.White
+                    )
+                    Text(
+                        text = callLabel,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
             }
         }
     }

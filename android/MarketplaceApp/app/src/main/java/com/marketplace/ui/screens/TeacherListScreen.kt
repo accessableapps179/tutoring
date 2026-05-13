@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -55,6 +56,9 @@ import com.marketplace.dto.TeacherDto
 import com.marketplace.viewmodel.ContactViewModel
 import com.marketplace.viewmodel.MessageViewModel
 import com.marketplace.viewmodel.TeacherViewModel
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
@@ -132,6 +136,19 @@ fun TeacherListScreen(
         MarketplaceFirebaseService.setBadgeCount(context, unreadCount)
     }
 
+    var displayTime by remember { mutableStateOf(Session.currentDateTime()) }
+    var debugInput by remember {
+        mutableStateOf(
+            Session.debugDateTime?.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) ?: ""
+        )
+    }
+    LaunchedEffect("clock") {
+        while (true) {
+            delay(1000L)
+            displayTime = Session.currentDateTime()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -199,6 +216,57 @@ fun TeacherListScreen(
             ) {
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = displayTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")),
+                                    style = MaterialTheme.typography.displaySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Text(
+                                    text = displayTime.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy")),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                OutlinedTextField(
+                                    value = debugInput,
+                                    onValueChange = { input ->
+                                        debugInput = input
+                                        if (input.isEmpty()) {
+                                            Session.debugDateTime = null
+                                        } else {
+                                            runCatching {
+                                                LocalDateTime.parse(
+                                                    input,
+                                                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                                                )
+                                            }.onSuccess { dt ->
+                                                Session.debugDateTime = dt
+                                                displayTime = dt
+                                            }
+                                        }
+                                    },
+                                    label = { Text("Override date/time (yyyy-MM-dd HH:mm)") },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 4.dp),
+                                    singleLine = true
+                                )
+                            }
+                        }
 
                         Button(
                             onClick = onMessagesClick,

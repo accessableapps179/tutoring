@@ -2,6 +2,7 @@
 package com.marketplace
 
 import com.marketplace.dto.TeacherDto
+import java.time.LocalDateTime
 
 /**
  * Lightweight in-memory session store.
@@ -49,6 +50,13 @@ object Session {
      */
     var pendingContactId: String = ""
 
+    // ─── Debug / Time override ─────────────────────────────────────────────────
+
+    /** Set from the main screen to simulate a different date/time during testing. */
+    var debugDateTime: LocalDateTime? = null
+
+    fun currentDateTime(): LocalDateTime = debugDateTime ?: LocalDateTime.now()
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     fun populate(token: String, role: String, userId: String, name: String) {
@@ -70,5 +78,6 @@ object Session {
         pendingCallName               = ""
         pendingTeacherName            = ""
         pendingContactId              = ""
+        debugDateTime                 = null
     }
 }
