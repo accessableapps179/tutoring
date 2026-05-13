@@ -67,10 +67,6 @@ class AvailabilityService(
         val dayOfWeek  = localDate.dayOfWeek.value
         val weekNumber = minOf(4, (localDate.dayOfMonth - 1) / 7 + 1)
 
-        val hourRange = availabilityRepository.getHourRange(teacherId)
-        val startHour = hourRange?.startHour ?: 6
-        val endHour   = hourRange?.endHour   ?: 22
-
         val weeklySlots = availabilityRepository.getWeeklySlots(teacherId)
             .filter { it.dayOfWeek == dayOfWeek }
             .map { it.hour }
@@ -98,8 +94,8 @@ class AvailabilityService(
 
         val result = mutableListOf<TeacherSlotStatus>()
 
-        var h = startHour.toDouble()
-        while (h < endHour.toDouble()) {
+        var h = 0.0
+        while (h < 24.0) {
             val booking     = bookings.firstOrNull { it.slotHour == h }
             val isInSchedule = weeklySlots.contains(h)
             val trialResult = booking?.let { trialResultsByBookingId[it.id] }
@@ -207,12 +203,7 @@ class AvailabilityService(
             .map { it.slotHour }
             .toSet()
 
-        val hourRange = availabilityRepository.getHourRange(teacherId)
-        val startHour = hourRange?.startHour ?: 6
-        val endHour = hourRange?.endHour ?: 22
-
         return weeklySlots
-            .filter { it >= startHour && it < endHour }
             .filter { it !in othersBookedHours }
             .filter { it !in myBookingsElsewhere }
             .sorted()

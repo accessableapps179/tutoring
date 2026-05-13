@@ -5,6 +5,7 @@ package com.marketplace.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.marketplace.dto.AvailableSlotDto
+import com.marketplace.dto.PlatonicSlotDto
 import com.marketplace.dto.TeacherSlotStatusDto
 import com.marketplace.dto.WeeklySlotDto
 import com.marketplace.repository.AvailabilityRepository
@@ -39,6 +40,10 @@ class AvailabilityViewModel : ViewModel() {
     private val _endHour = MutableStateFlow(22)
     val endHour: StateFlow<Int> = _endHour
 
+    // PAG coverage: weekNumber → set of dayOfWeek values that have at least one slot
+    private val _pagCoverage = MutableStateFlow<Map<Int, Set<Int>>>(emptyMap())
+    val pagCoverage: StateFlow<Map<Int, Set<Int>>> = _pagCoverage
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
@@ -47,6 +52,18 @@ class AvailabilityViewModel : ViewModel() {
 
     private var _currentTeacherId = ""
     private var _currentDate = ""
+
+    // ─── PAG coverage ────────────────────────────────────────
+
+    fun loadPagCoverage() {
+        viewModelScope.launch {
+            repository.getPlatonicSlots().onSuccess { slots ->
+                _pagCoverage.value = slots
+                    .groupBy { it.weekNumber }
+                    .mapValues { (_, s) -> s.map { it.dayOfWeek }.toSet() }
+            }
+        }
+    }
 
     // ─── Teacher ─────────────────────────────────────────────
 

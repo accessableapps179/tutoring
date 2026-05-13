@@ -269,15 +269,7 @@ fun TeacherAvailabilityScreen(
                         )
                     }
                 },
-                actions = {
-                    IconButton(onClick = onEditTemplateClick) {
-                        Icon(
-                            imageVector = Icons.Filled.GridView,
-                            contentDescription = "Edit template",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                },
+                actions = {},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
@@ -318,13 +310,13 @@ fun TeacherAvailabilityScreen(
                 )
 
                 IconButton(
-                    onClick = { if (weekOffset < 1) weekOffset++ },
-                    enabled = weekOffset < 1
+                    onClick = { if (weekOffset < 12) weekOffset++ },
+                    enabled = weekOffset < 12
                 ) {
                     Icon(
                         imageVector = Icons.Filled.ChevronRight,
                         contentDescription = "Next week",
-                        tint = if (weekOffset < 1) MaterialTheme.colorScheme.primary
+                        tint = if (weekOffset < 12) MaterialTheme.colorScheme.primary
                         else MaterialTheme.colorScheme.outline
                     )
                 }
@@ -338,6 +330,9 @@ fun TeacherAvailabilityScreen(
                     val isSelected = date == selectedDate
                     val isPast = date.isBefore(today)
                     val dayName = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+                    val chipPagWeek = minOf(4, (date.dayOfMonth - 1) / 7 + 1)
+                    val isFirstOfPagWeek = date.dayOfMonth == 1 ||
+                        minOf(4, (date.dayOfMonth - 2) / 7 + 1) != chipPagWeek
 
                     Column(
                         modifier = Modifier
@@ -373,14 +368,25 @@ fun TeacherAvailabilityScreen(
                                 else       -> MaterialTheme.colorScheme.onSurfaceVariant
                             }
                         )
+                        Text(
+                            text = if (isFirstOfPagWeek) "Wk$chipPagWeek" else "",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = if (isFirstOfPagWeek) FontWeight.Bold else FontWeight.Normal,
+                            color = when {
+                                isSelected          -> MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                                isFirstOfPagWeek    -> Color(0xFF1565C0)
+                                else                -> MaterialTheme.colorScheme.surface
+                            }
+                        )
                     }
                 }
             }
 
             val selectedDayName = selectedDate.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
             val selectedDateFormatted = selectedDate.format(DateTimeFormatter.ofPattern("d MMMM yyyy"))
+            val pagWeek = minOf(4, (selectedDate.dayOfMonth - 1) / 7 + 1)
             Text(
-                text = "$selectedDayName, $selectedDateFormatted",
+                text = "$selectedDayName, $selectedDateFormatted · Wk$pagWeek",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

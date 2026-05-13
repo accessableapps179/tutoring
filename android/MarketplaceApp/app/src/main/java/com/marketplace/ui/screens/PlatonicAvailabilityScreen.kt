@@ -68,15 +68,16 @@ fun PlatonicAvailabilityScreen(
 ) {
     val slots     by viewModel.platonicSlots.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-    val stampDone by viewModel.stampDone.collectAsState()
-
     var selectedCell  by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var showNukeConfirm by remember { mutableStateOf(false) }
 
     val today = LocalDate.now()
     val stampYear  = today.year
     val stampMonth = today.monthValue
-    val monthName  = today.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
+    fun monthLabel(offset: Int): String {
+        val d = today.withDayOfMonth(1).plusMonths(offset.toLong())
+        return d.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+    }
 
     LaunchedEffect(Unit) { viewModel.load() }
 
@@ -95,6 +96,11 @@ fun PlatonicAvailabilityScreen(
                 TextButton(onClick = { showNukeConfirm = false }) { Text("Cancel") }
             }
         )
+    }
+
+    val stampDone by viewModel.stampDone.collectAsState()
+    LaunchedEffect(stampDone) {
+        if (stampDone) onStampComplete()
     }
 
     // Pre-build a lookup: (weekNumber, dayOfWeek) -> set of hours
@@ -134,29 +140,37 @@ fun PlatonicAvailabilityScreen(
                     CircularProgressIndicator()
                 }
             } else {
-                // ─── Nuke + Stamp buttons ─────────────────────────────
+                // ─── Nuke button ──────────────────────────────────────
+                Button(
+                    onClick = { showNukeConfirm = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))
+                ) {
+                    Text("Nuke template")
+                }
+
+                // ─── Stamp buttons (1 / 2 / 3 months) ────────────────
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Button(
-                        onClick = { showNukeConfirm = true },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))
-                    ) {
-                        Text("Nuke")
-                    }
-                    Button(
-                        onClick = {
-                            viewModel.stampMonth(stampYear, stampMonth)
-                            onStampComplete()
-                        },
-                        modifier = Modifier.weight(2f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Text("Stamp to $monthName $stampYear")
+                    listOf(1, 2, 3).forEach { count ->
+                        val label = when (count) {
+                            1 -> monthLabel(0)
+                            2 -> "${monthLabel(0)}–${monthLabel(1)}"
+                            else -> "${monthLabel(0)}–${monthLabel(2)}"
+                        }
+                        Button(
+                            onClick = { viewModel.stampMonth(stampYear, stampMonth, count) },
+                            enabled = !isLoading,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            if (isLoading) Text("…")
+                            else Text(label, maxLines = 1)
+                        }
                     }
                 }
 

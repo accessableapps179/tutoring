@@ -3,7 +3,6 @@ package com.marketplace.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.marketplace.dto.PlatonicSlotDto
-import com.marketplace.dto.StampMonthResponse
 import com.marketplace.repository.AvailabilityRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,12 +48,16 @@ class PlatonicAvailabilityViewModel : ViewModel() {
         }
     }
 
-    fun stampMonth(year: Int, month: Int) {
+    fun stampMonth(year: Int, month: Int, count: Int = 1) {
         viewModelScope.launch {
             _isLoading.value = true
-            repository.stampMonth(year, month)
-                .onSuccess  { _stampDone.value = true }
-                .onFailure  { _errorMessage.value = "Stamp failed: ${it.message}" }
+            var allOk = true
+            repeat(count) { i ->
+                val d = java.time.LocalDate.of(year, month, 1).plusMonths(i.toLong())
+                repository.stampMonth(d.year, d.monthValue)
+                    .onFailure { allOk = false; _errorMessage.value = "Stamp failed: ${it.message}" }
+            }
+            if (allOk) _stampDone.value = true
             _isLoading.value = false
         }
     }
