@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -57,25 +58,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
-
-private data class SlotPair(val first: AvailableSlotDto, val second: AvailableSlotDto)
-
-private fun buildSlotPairs(slots: List<AvailableSlotDto>): List<SlotPair> {
-    val sorted = slots.sortedBy { it.hour }
-    val result = mutableListOf<SlotPair>()
-    var i = 0
-    while (i < sorted.size) {
-        val cur = sorted[i]
-        val nxt = sorted.getOrNull(i + 1)
-        if (nxt != null && nxt.hour == cur.hour + 0.5 && !cur.isBooked && !nxt.isBooked) {
-            result.add(SlotPair(cur, nxt))
-            i += 2
-        } else {
-            i++
-        }
-    }
-    return result
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -129,12 +111,15 @@ fun SlotBookingScreen(
     }
 
     val isDoubleMode = isPostTrial && selectedDuration == 2
-    val slotPairs = remember(availableSlots, isDoubleMode) {
-        if (isDoubleMode) buildSlotPairs(availableSlots) else emptyList()
-    }
-    val selectedPair = if (isDoubleMode && selectedSlot != null) {
-        slotPairs.firstOrNull { it.first.hour == selectedSlot!!.hour }
-    } else null
+
+    // For double mode: hours of the selected pair
+    val selectedFirstHour = if (isDoubleMode) selectedSlot?.hour else null
+    val selectedSecondHour = selectedFirstHour?.plus(0.5)
+
+    // Set of free hours in double mode (used to decide if a chip can start a double)
+    val freeHours = if (isDoubleMode) {
+        availableSlots.filter { !it.isBooked }.map { it.hour }.toSet()
+    } else emptySet()
 
     Scaffold(
         topBar = {
@@ -324,71 +309,90 @@ fun SlotBookingScreen(
                     )
                 }
             } else if (isDoubleMode) {
-                if (slotPairs.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .padding(24.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "No consecutive slots available for 50 min",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.outline,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        slotPairs.chunked(2).forEach { rowPairs ->
+                // Double mode: normal grid, rectangle appears only around the selected pair
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    availableSlots.chunked(4).forEach { rowSlots ->
+                        val firstIdx = if (selectedFirstHour != null)
+                            rowSlots.indexOfFirst { it.hour == selectedFirstHour } else -1
+                        val secondIdx = if (selectedSecondHour != null)
+                            rowSlots.indexOfFirst { it.hour == selectedSecondHour } else -1
+                        val pairInRow = firstIdx >= 0 && secondIdx == firstIdx + 1
+
+                        if (pairInRow) {
+                            // Row contains consecutive selected pair — draw border around them
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                rowPairs.forEach { pair ->
-                                    val isSelected = selectedPair == pair
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .border(
-                                                width = 2.dp,
-                                                color = if (isSelected) MaterialTheme.colorScheme.primary
-                                                        else Color.Black,
-                                                shape = RoundedCornerShape(12.dp)
-                                            )
-                                            .clickable {
-                                                availabilityViewModel.selectSlot(pair.first)
-                                            }
-                                            .padding(4.dp)
+                                // chips before the pair
+                                for (i in 0 until firstIdx) {
+                                    DoubleChip(
+                                        slot = rowSlots[i],
+                                        isSelected = false,
+                                        freeHours = freeHours,
+                                        onSelect = { availabilityViewModel.selectSlot(it) }
+                                    )
+                                }
+                                // bordered pair
+                                Box(
+                                    modifier = Modifier
+                                        .weight(2f)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .border(2.dp, Color.Black, RoundedCornerShape(12.dp))
+                                        .padding(3.dp)
+                                ) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            PairSlotBox(
-                                                time = formatSlotTime(pair.first.hour),
-                                                isSelected = isSelected,
-                                                modifier = Modifier.weight(1f).height(44.dp)
-                                            )
-                                            PairSlotBox(
-                                                time = formatSlotTime(pair.second.hour),
-                                                isSelected = isSelected,
-                                                modifier = Modifier.weight(1f).height(44.dp)
-                                            )
-                                        }
+                                        DoubleChipInner(
+                                            time = formatSlotTime(rowSlots[firstIdx].hour),
+                                            isSelected = true,
+                                            modifier = Modifier.weight(1f).height(44.dp)
+                                        )
+                                        DoubleChipInner(
+                                            time = formatSlotTime(rowSlots[secondIdx].hour),
+                                            isSelected = true,
+                                            modifier = Modifier.weight(1f).height(44.dp)
+                                        )
                                     }
                                 }
-                                if (rowPairs.size == 1) {
-                                    Box(modifier = Modifier.weight(1f))
+                                // chips after the pair
+                                for (i in secondIdx + 1 until rowSlots.size) {
+                                    DoubleChip(
+                                        slot = rowSlots[i],
+                                        isSelected = false,
+                                        freeHours = freeHours,
+                                        onSelect = { availabilityViewModel.selectSlot(it) }
+                                    )
                                 }
+                                // invisible spacers so all rows have the same total weight (4)
+                                val filled = (firstIdx) + 2 + (rowSlots.size - secondIdx - 1)
+                                repeat(4 - filled) { Box(modifier = Modifier.weight(1f)) }
+                            }
+                        } else {
+                            // Normal row — no pair border
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                rowSlots.forEach { slot ->
+                                    val isSelectedChip = slot.hour == selectedFirstHour || slot.hour == selectedSecondHour
+                                    DoubleChip(
+                                        slot = slot,
+                                        isSelected = isSelectedChip,
+                                        freeHours = freeHours,
+                                        onSelect = { availabilityViewModel.selectSlot(it) }
+                                    )
+                                }
+                                // pad last row to keep chip widths consistent
+                                repeat(4 - rowSlots.size) { Box(modifier = Modifier.weight(1f)) }
                             }
                         }
                     }
                 }
             } else {
+                // Single mode: 4-per-row fixed-size chips
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     availableSlots.chunked(4).forEach { rowSlots ->
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -397,9 +401,7 @@ fun SlotBookingScreen(
                                     slot = slot,
                                     isSelected = selectedSlot == slot,
                                     onClick = {
-                                        if (!slot.isBooked) {
-                                            availabilityViewModel.selectSlot(slot)
-                                        }
+                                        if (!slot.isBooked) availabilityViewModel.selectSlot(slot)
                                     }
                                 )
                             }
@@ -420,7 +422,7 @@ fun SlotBookingScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (isDoubleMode && selectedPair != null) {
+                    if (isDoubleMode && selectedSecondHour != null) {
                         Text(
                             text = "Selected:",
                             style = MaterialTheme.typography.titleSmall,
@@ -429,22 +431,18 @@ fun SlotBookingScreen(
                         )
                         Box(
                             modifier = Modifier
-                                .border(
-                                    2.dp,
-                                    MaterialTheme.colorScheme.onPrimaryContainer,
-                                    RoundedCornerShape(8.dp)
-                                )
+                                .border(2.dp, MaterialTheme.colorScheme.onPrimaryContainer, RoundedCornerShape(8.dp))
                                 .padding(horizontal = 12.dp, vertical = 8.dp)
                         ) {
                             Column {
                                 Text(
-                                    text = formatSlotTime(selectedPair.first.hour),
+                                    text = formatSlotTime(slot.hour),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Text(
-                                    text = formatSlotTime(selectedPair.second.hour),
+                                    text = formatSlotTime(selectedSecondHour),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -510,12 +508,13 @@ fun SlotBookingScreen(
     }
 }
 
+// Chip used inside the bordered pair box — no click handler (pair box handles it)
 @Composable
-private fun PairSlotBox(time: String, isSelected: Boolean, modifier: Modifier = Modifier) {
+private fun DoubleChipInner(time: String, isSelected: Boolean, modifier: Modifier = Modifier) {
     val bgColor by animateColorAsState(
         targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFF4CAF50),
         animationSpec = tween(200),
-        label = "pairSlotColor"
+        label = "doubleChipInner"
     )
     Box(
         modifier = modifier
@@ -523,8 +522,40 @@ private fun PairSlotBox(time: String, isSelected: Boolean, modifier: Modifier = 
             .background(bgColor),
         contentAlignment = Alignment.Center
     ) {
+        Text(text = time, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
+    }
+}
+
+// Chip used in double mode for non-paired slots — weight-based sizing
+@Composable
+private fun RowScope.DoubleChip(
+    slot: AvailableSlotDto,
+    isSelected: Boolean,
+    freeHours: Set<Double>,
+    onSelect: (AvailableSlotDto) -> Unit
+) {
+    val canStartDouble = !slot.isBooked && (slot.hour + 0.5) in freeHours
+    val bgColor by animateColorAsState(
+        targetValue = when {
+            isSelected  -> MaterialTheme.colorScheme.primary
+            slot.isBooked -> Color(0xFFE53935)
+            canStartDouble -> Color(0xFF4CAF50)
+            else -> Color(0xFF4CAF50).copy(alpha = 0.4f)  // dimmed — can't start a double
+        },
+        animationSpec = tween(200),
+        label = "doubleChipColor"
+    )
+    Box(
+        modifier = Modifier
+            .weight(1f)
+            .height(44.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(bgColor)
+            .clickable(enabled = canStartDouble) { onSelect(slot) },
+        contentAlignment = Alignment.Center
+    ) {
         Text(
-            text = time,
+            text = formatSlotTime(slot.hour),
             fontWeight = FontWeight.Bold,
             fontSize = 13.sp,
             color = Color.White
