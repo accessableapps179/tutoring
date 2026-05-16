@@ -45,7 +45,7 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
-private val CAL_DAY_HEADERS = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+private val CAL_DAY_HEADERS = listOf("M", "T", "W", "T", "F", "S", "S")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,11 +85,14 @@ fun MonthCalendarScreen(
             )
         }
     ) { padding ->
+        Box(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentAlignment = Alignment.Center
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.75f)
-                .padding(padding)
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             // ─── Month navigation ─────────────────────────────────────────────
@@ -101,7 +104,7 @@ fun MonthCalendarScreen(
                 IconButton(onClick = { displayMonth = displayMonth.minusMonths(1) }) {
                     Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous month")
                 }
-                Text(text = monthLabel, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(text = monthLabel, fontWeight = FontWeight.Bold, fontSize = 24.sp)
                 IconButton(onClick = { displayMonth = displayMonth.plusMonths(1) }) {
                     Icon(Icons.Filled.ChevronRight, contentDescription = "Next month")
                 }
@@ -117,7 +120,7 @@ fun MonthCalendarScreen(
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
+                        fontSize = 18.sp,
                         color = Color.Black
                     )
                 }
@@ -161,7 +164,7 @@ fun MonthCalendarScreen(
                                 Text(
                                     text = dayNum.toString(),
                                     fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-                                    fontSize = 15.sp,
+                                    fontSize = 20.sp,
                                     color = when {
                                         isToday -> Color.White
                                         isPast  -> Color(0xFFBBBBBB)
@@ -175,5 +178,6 @@ fun MonthCalendarScreen(
             }
             } // end grid Column
         }
+        } // end centering Box
     }
 }
