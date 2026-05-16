@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.GridView
@@ -109,6 +110,7 @@ val SlotOrange = Color(0xFFE65100)
 @Composable
 fun TeacherAvailabilityScreen(
     onBackClick: () -> Unit,
+    onCalendarClick: (() -> Unit)? = null,
     onEditTemplateClick: () -> Unit = {},
     onStartVideoCall: (contactId: String, otherPersonName: String) -> Unit = { _, _ -> },
     onRejoinCall: (contactId: String, otherPersonName: String) -> Unit = { _, _ -> },
@@ -281,7 +283,18 @@ fun TeacherAvailabilityScreen(
                         )
                     }
                 },
-                actions = {},
+                actions = {
+                    if (onCalendarClick != null) {
+                        IconButton(onClick = onCalendarClick) {
+                            Icon(
+                                imageVector = Icons.Filled.CalendarMonth,
+                                contentDescription = "Month view",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(40.dp)
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary

@@ -231,9 +231,15 @@ fun AppNavGraph() {
         composable(
             route = "teacher_availability/{userId}",
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
-        ) {
+        ) { back ->
+            val userId = back.arguments?.getString("userId") ?: ""
             TeacherAvailabilityScreen(
                 onBackClick         = rememberSingleClick { navController.popBackStack() },
+                onCalendarClick     = {
+                    navController.navigate("teacher_month_calendar/$userId") {
+                        popUpTo("teacher_month_calendar/$userId") { inclusive = true }
+                    }
+                },
                 onEditTemplateClick = { navController.navigate("platonic_availability") },
                 onStartVideoCall    = { contactId, otherPersonName ->
                     Session.pendingCallName = otherPersonName
