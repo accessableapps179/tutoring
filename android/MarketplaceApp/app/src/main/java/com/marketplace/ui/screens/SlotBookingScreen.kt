@@ -46,6 +46,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -339,9 +343,6 @@ fun SlotBookingScreen(
                                 val secondSlot = rowSlots[secondIdx]
                                 val secondCanShift = !secondSlot.isBooked &&
                                         (secondSlot.hour + 0.5) in freeHours
-                                // second chip inherits its own pre-selection colour:
-                                // if it was light green (can't start a double) → light blue
-                                // if it was full green (can start a double) → solid blue
                                 val secondIsLightBlue = (secondSlot.hour + 0.5) !in freeHours
                                 Box(
                                     modifier = Modifier
@@ -390,13 +391,11 @@ fun SlotBookingScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 rowSlots.forEach { slot ->
-                                    val isSelectedChip = slot.hour == selectedFirstHour || slot.hour == selectedSecondHour
-                                    val isSecond = slot.hour == selectedSecondHour &&
-                                            (slot.hour + 0.5) !in freeHours
+                                    val isFirstChip = slot.hour == selectedFirstHour
                                     DoubleChip(
                                         slot = slot,
-                                        isSelected = isSelectedChip,
-                                        isSecondOfPair = isSecond,
+                                        isSelected = isFirstChip || slot.hour == selectedSecondHour,
+                                        isFirstOfPair = isFirstChip,
                                         freeHours = freeHours,
                                         onSelect = { availabilityViewModel.selectSlot(it) }
                                     )
@@ -566,14 +565,14 @@ private fun DoubleChipInner(
 private fun RowScope.DoubleChip(
     slot: AvailableSlotDto,
     isSelected: Boolean,
-    isSecondOfPair: Boolean = false,
+    isFirstOfPair: Boolean = false,
     freeHours: Set<Double>,
     onSelect: (AvailableSlotDto) -> Unit
 ) {
     val canStartDouble = !slot.isBooked && (slot.hour + 0.5) in freeHours
     val bgColor by animateColorAsState(
         targetValue = when {
-            isSelected  -> MaterialTheme.colorScheme.primary
+            isSelected -> MaterialTheme.colorScheme.primary
             slot.isBooked -> Color(0xFFE53935)
             else -> Color(0xFF4CAF50)
         },
@@ -584,6 +583,32 @@ private fun RowScope.DoubleChip(
         modifier = Modifier
             .weight(1f)
             .height(44.dp)
+            .then(if (isSelected) Modifier.drawWithContent {
+                drawContent()
+                val r = 12.dp.toPx()
+                val sw = 2.dp.toPx()
+                val w = size.width
+                val h = size.height
+                val path = Path()
+                if (isFirstOfPair) {
+                    // open right: top + left + bottom, no right vertical
+                    path.moveTo(w, 0f)
+                    path.lineTo(r, 0f)
+                    path.arcTo(Rect(0f, 0f, 2f * r, 2f * r), 270f, -90f, false)
+                    path.lineTo(0f, h - r)
+                    path.arcTo(Rect(0f, h - 2f * r, 2f * r, h), 180f, -90f, false)
+                    path.lineTo(w, h)
+                } else {
+                    // open left: top + right + bottom, no left vertical
+                    path.moveTo(0f, 0f)
+                    path.lineTo(w - r, 0f)
+                    path.arcTo(Rect(w - 2f * r, 0f, w, 2f * r), 270f, 90f, false)
+                    path.lineTo(w, h - r)
+                    path.arcTo(Rect(w - 2f * r, h - 2f * r, w, h), 0f, 90f, false)
+                    path.lineTo(0f, h)
+                }
+                drawPath(path, Color.Black, style = Stroke(width = sw))
+            } else Modifier)
             .clip(RoundedCornerShape(12.dp))
             .background(bgColor)
             .clickable(enabled = canStartDouble) { onSelect(slot) },
@@ -595,7 +620,7 @@ private fun RowScope.DoubleChip(
             fontSize = 13.sp,
             color = Color.White
         )
-        if ((!canStartDouble && !slot.isBooked && !isSelected) || (isSelected && isSecondOfPair)) {
+        if (!canStartDouble && !isFirstOfPair && !slot.isBooked) {
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
