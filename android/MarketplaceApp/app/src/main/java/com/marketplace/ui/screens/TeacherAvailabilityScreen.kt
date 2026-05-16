@@ -80,6 +80,17 @@ fun formatSlotRange(hour: Double): String {
     return "${formatSlotTime(hour)} — ${formatSlotTime(end)}"
 }
 
+fun formatLessonEnd(startHour: Double, durationMinutes: Int): String {
+    val totalMinutes = (startHour * 60).toInt() + durationMinutes
+    val endH = totalMinutes / 60
+    val endM = totalMinutes % 60
+    return "$endH:${endM.toString().padStart(2, '0')}"
+}
+
+fun formatLessonRange(startHour: Double, durationMinutes: Int): String {
+    return "${formatSlotTime(startHour)} — ${formatLessonEnd(startHour, durationMinutes)}"
+}
+
 /** Checks /call-status/{roomId} and returns true if a call is currently in progress. */
 suspend fun isCallInProgress(bookingId: String): Boolean {
     return try {
@@ -484,7 +495,7 @@ fun TeacherSlotChip(
 
     val modifier = if (isTrialCompleted) {
         Modifier
-            .size(width = 80.dp, height = 44.dp)
+            .size(width = 80.dp, height = 60.dp)
             .clip(RoundedCornerShape(0.dp))
             .background(bgColor)
     } else {
@@ -498,7 +509,7 @@ fun TeacherSlotChip(
             else -> Color.White.copy(alpha = 0.5f)
         }
         Modifier
-            .size(width = 80.dp, height = 44.dp)
+            .size(width = 80.dp, height = 60.dp)
             .clip(RoundedCornerShape(0.dp))
             .background(bgColor)
             .border(width = borderWidth, color = borderColor, shape = RoundedCornerShape(0.dp))
@@ -513,7 +524,7 @@ fun TeacherSlotChip(
                 else                       -> formatSlotTime(slot.hour)
             },
             fontWeight = FontWeight.Bold,
-            fontSize = 13.sp,
+            fontSize = 20.sp,
             color = Color.White
         )
     }

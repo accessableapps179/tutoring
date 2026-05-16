@@ -207,7 +207,7 @@ fun UpcomingBookingCard(
 
     val dayName = slotDate?.dayOfWeek?.getDisplayName(TextStyle.FULL, Locale.getDefault()) ?: ""
     val dateFormatted = slotDate?.format(DateTimeFormatter.ofPattern("d MMMM yyyy")) ?: booking.slotDate
-    val timeFormatted = formatSlotRange(booking.slotHour)
+    val timeFormatted = formatLessonRange(booking.slotHour, booking.durationSlots * 25)
 
     val statusColor = when (booking.status) {
         "CONFIRMED" -> MaterialTheme.colorScheme.primary
@@ -275,7 +275,8 @@ fun UpcomingBookingCard(
             )
             Text(
                 text = "$dayName, $dateFormatted",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -292,7 +293,8 @@ fun UpcomingBookingCard(
             )
             Text(
                 text = timeFormatted,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

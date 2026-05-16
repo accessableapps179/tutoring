@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Button
@@ -349,7 +350,7 @@ fun SlotBookingScreen(
                                 Box(
                                     modifier = Modifier
                                         .weight(2f)
-                                        .height(44.dp)
+                                        .height(60.dp)
                                         .drawWithContent {
                                             drawContent()
                                             val sw = 4.dp.toPx()
@@ -369,13 +370,14 @@ fun SlotBookingScreen(
                                         DoubleChipInner(
                                             time = formatSlotTime(rowSlots[firstIdx].hour),
                                             isSelected = true,
-                                            modifier = Modifier.weight(1f).height(44.dp)
+                                            modifier = Modifier.weight(1f).height(60.dp)
                                         )
                                         DoubleChipInner(
-                                            time = formatSlotTime(secondSlot.hour),
+                                            time = formatLessonEnd(rowSlots[firstIdx].hour, 50),
                                             isSelected = true,
                                             isSecondChip = secondIsLightBlue,
-                                            modifier = Modifier.weight(1f).height(44.dp),
+                                            subTime = formatSlotTime(secondSlot.hour),
+                                            modifier = Modifier.weight(1f).height(60.dp),
                                             onClick = if (secondCanShift) {
                                                 { availabilityViewModel.selectSlot(secondSlot) }
                                             } else null
@@ -403,10 +405,12 @@ fun SlotBookingScreen(
                             ) {
                                 rowSlots.forEach { slot ->
                                     val isFirstChip = slot.hour == selectedFirstHour
+                                    val isSecondChip = slot.hour == selectedSecondHour
                                     DoubleChip(
                                         slot = slot,
-                                        isSelected = isFirstChip || slot.hour == selectedSecondHour,
+                                        isSelected = isFirstChip || isSecondChip,
                                         isFirstOfPair = isFirstChip,
+                                        pairedStartHour = if (isSecondChip) selectedFirstHour else null,
                                         freeHours = freeHours,
                                         onSelect = { availabilityViewModel.selectSlot(it) }
                                     )
@@ -448,44 +452,24 @@ fun SlotBookingScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (isDoubleMode && selectedSecondHour != null) {
+                    val durationMinutes = if (isDoubleMode) 50 else 25
+                    Text(
+                        text = "Selected: ${formatLessonRange(slot.hour, durationMinutes)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    if (isDoubleMode) {
                         Text(
-                            text = "Selected:",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Box(
-                            modifier = Modifier
-                                .border(2.dp, MaterialTheme.colorScheme.onPrimaryContainer, RoundedCornerShape(8.dp))
-                                .padding(horizontal = 12.dp, vertical = 8.dp)
-                        ) {
-                            Column {
-                                Text(
-                                    text = formatSlotTime(slot.hour),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                Text(
-                                    text = formatSlotTime(selectedSecondHour),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
-                        }
-                    } else {
-                        Text(
-                            text = "Selected: ${formatSlotRange(slot.hour)}",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            text = formatSlotTime(slot.hour + 0.5),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
                         )
                     }
                     Text(
                         text = selectedDateFormatted,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
                 }
@@ -540,6 +524,7 @@ private fun DoubleChipInner(
     time: String,
     isSelected: Boolean,
     isSecondChip: Boolean = false,
+    subTime: String? = null,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
@@ -558,7 +543,15 @@ private fun DoubleChipInner(
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = time, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
+        Text(text = time, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.White)
+        if (subTime != null) {
+            Text(
+                text = subTime,
+                fontSize = 10.sp,
+                color = Color.White.copy(alpha = 0.6f),
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 3.dp)
+            )
+        }
         if (isSecondChip) {
             Box(
                 modifier = Modifier
@@ -577,6 +570,7 @@ private fun RowScope.DoubleChip(
     slot: AvailableSlotDto,
     isSelected: Boolean,
     isFirstOfPair: Boolean = false,
+    pairedStartHour: Double? = null,
     freeHours: Set<Double>,
     onSelect: (AvailableSlotDto) -> Unit
 ) {
@@ -593,7 +587,7 @@ private fun RowScope.DoubleChip(
     Box(
         modifier = Modifier
             .weight(1f)
-            .height(44.dp)
+            .height(60.dp)
             .then(if (isSelected) Modifier.drawWithContent {
                 drawContent()
                 val sw = 4.dp.toPx()
@@ -620,12 +614,30 @@ private fun RowScope.DoubleChip(
             .clickable(enabled = canStartDouble) { onSelect(slot) },
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = formatSlotTime(slot.hour),
-            fontWeight = FontWeight.Bold,
-            fontSize = 13.sp,
-            color = Color.White
-        )
+        val chipText = when {
+            isSelected && pairedStartHour != null -> formatLessonEnd(pairedStartHour, 50)
+            else -> formatSlotTime(slot.hour)
+        }
+        Text(text = chipText, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.White)
+        if (isSelected && pairedStartHour != null) {
+            Text(
+                text = formatSlotTime(slot.hour),
+                fontSize = 10.sp,
+                color = Color.White.copy(alpha = 0.6f),
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 3.dp)
+            )
+        }
+        if (isSelected && isFirstOfPair) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.75f),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(2.dp)
+                    .size(10.dp)
+            )
+        }
         if (!canStartDouble && !isFirstOfPair && !slot.isBooked) {
             Box(
                 modifier = Modifier
@@ -670,7 +682,7 @@ fun SlotChip(
         Text(
             text = formatSlotTime(slot.hour),
             fontWeight = FontWeight.Bold,
-            fontSize = 13.sp,
+            fontSize = 20.sp,
             color = Color.White
         )
     }

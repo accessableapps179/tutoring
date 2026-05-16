@@ -270,7 +270,7 @@ fun PlatonicAvailabilityScreen(
                                     Text(
                                         text = formatSlotTime(h),
                                         color = Color.White,
-                                        fontSize = 12.sp,
+                                        fontSize = 17.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
