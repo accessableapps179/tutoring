@@ -688,7 +688,7 @@ fun SlotChip(
 
     Box(
         modifier = Modifier
-            .size(width = 88.dp, height = 48.dp)
+            .size(width = 88.dp, height = 88.dp)
             .clip(RoundedCornerShape(0.dp))
             .background(bgColor)
             .border(
