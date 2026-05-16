@@ -93,11 +93,12 @@ class AvailabilityService(
             .map { it.hour }
             .toSet()
 
-        // Build hour→booking covering both slots of double bookings
+        // Build hour→booking; only extend to the second slot for CONFIRMED doubles
+        // (PENDING = trial = always 1 slot regardless of durationSlots in DB)
         val hourToBooking = mutableMapOf<Double, com.marketplace.domain.Booking>()
         for (b in bookings) {
             hourToBooking[b.slotHour] = b
-            if (b.durationSlots >= 2) hourToBooking[b.slotHour + 0.5] = b
+            if (b.durationSlots >= 2 && b.status == "CONFIRMED") hourToBooking[b.slotHour + 0.5] = b
         }
 
         val result = mutableListOf<TeacherSlotStatus>()
@@ -108,7 +109,7 @@ class AvailabilityService(
             val isInSchedule = weeklySlots.contains(h)
             val trialResult  = booking?.let { trialResultsByBookingId[it.id] }
             val isFirstSlot  = booking != null && booking.slotHour == h
-            val bookedDuration = if (isFirstSlot && booking!!.durationSlots >= 2) 2 else 1
+            val bookedDuration = if (isFirstSlot && booking!!.durationSlots >= 2 && booking.status == "CONFIRMED") 2 else 1
 
             val status = when {
                 trialResult != null && trialResult.happy   -> "TRIAL_COMPLETED_HAPPY"
