@@ -640,7 +640,7 @@ private fun RowScope.DoubleChip(
         if (isSelected && isFirstOfPair) {
             Text(
                 text = "▶",
-                fontSize = 20.sp,
+                fontSize = 13.sp,
                 color = Color.White.copy(alpha = 0.85f),
                 modifier = Modifier.align(Alignment.CenterEnd).padding(end = 0.dp)
             )
