@@ -20,7 +20,8 @@ data class TeacherSlotStatus(
     val status: String,
     val bookingId: String?,
     val studentName: String?,
-    val conflictsWithPag: Boolean = false
+    val conflictsWithPag: Boolean = false,
+    val bookedDuration: Int = 1
 )
 
 data class StampConflict(val date: String, val hour: Double)
@@ -92,13 +93,22 @@ class AvailabilityService(
             .map { it.hour }
             .toSet()
 
+        // Build hour→booking covering both slots of double bookings
+        val hourToBooking = mutableMapOf<Double, com.marketplace.domain.Booking>()
+        for (b in bookings) {
+            hourToBooking[b.slotHour] = b
+            if (b.durationSlots >= 2) hourToBooking[b.slotHour + 0.5] = b
+        }
+
         val result = mutableListOf<TeacherSlotStatus>()
 
         var h = 0.0
         while (h < 24.0) {
-            val booking     = bookings.firstOrNull { it.slotHour == h }
+            val booking      = hourToBooking[h]
             val isInSchedule = weeklySlots.contains(h)
-            val trialResult = booking?.let { trialResultsByBookingId[it.id] }
+            val trialResult  = booking?.let { trialResultsByBookingId[it.id] }
+            val isFirstSlot  = booking != null && booking.slotHour == h
+            val bookedDuration = if (isFirstSlot && booking!!.durationSlots >= 2) 2 else 1
 
             val status = when {
                 trialResult != null && trialResult.happy   -> "TRIAL_COMPLETED_HAPPY"
@@ -114,12 +124,13 @@ class AvailabilityService(
 
             result.add(
                 TeacherSlotStatus(
-                    date           = date,
-                    hour           = h,
-                    status         = status,
-                    bookingId      = booking?.id,
-                    studentName    = booking?.studentName,
-                    conflictsWithPag = conflictsWithPag
+                    date             = date,
+                    hour             = h,
+                    status           = status,
+                    bookingId        = booking?.id,
+                    studentName      = booking?.studentName,
+                    conflictsWithPag = conflictsWithPag,
+                    bookedDuration   = bookedDuration
                 )
             )
             h += 0.5

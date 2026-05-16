@@ -35,7 +35,8 @@ data class TeacherSlotStatusResponse(
     val status: String,
     val bookingId: String?,
     val studentName: String?,
-    val conflictsWithPag: Boolean = false
+    val conflictsWithPag: Boolean = false,
+    val bookedDuration: Int = 1
 )
 
 @Serializable
@@ -119,7 +120,8 @@ fun Application.availabilityRoutes() {
                         status           = it.status,
                         bookingId        = it.bookingId,
                         studentName      = it.studentName,
-                        conflictsWithPag = it.conflictsWithPag
+                        conflictsWithPag = it.conflictsWithPag,
+                        bookedDuration   = it.bookedDuration
                     )
                 }
                 call.respond(response)

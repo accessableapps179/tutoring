@@ -56,7 +56,8 @@ data class TeacherSlotStatusDto(
     val status: String,        // UNAVAILABLE, AVAILABLE, PENDING, CONFIRMED
     val bookingId: String? = null,
     val studentName: String? = null,
-    val conflictsWithPag: Boolean = false
+    val conflictsWithPag: Boolean = false,
+    val bookedDuration: Int = 1
 )
 
 @Serializable

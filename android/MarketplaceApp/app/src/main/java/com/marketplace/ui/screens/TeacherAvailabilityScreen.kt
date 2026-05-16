@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -145,7 +147,7 @@ fun TeacherAvailabilityScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Time: ${formatSlotRange(slot.hour)}",
+                        text = "Time: ${formatLessonRange(slot.hour, if (slot.bookedDuration >= 2) 50 else 25)}",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
@@ -201,7 +203,7 @@ fun TeacherAvailabilityScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Time: ${formatSlotRange(slot.hour)}",
+                        text = "Time: ${formatLessonRange(slot.hour, if (slot.bookedDuration >= 2) 50 else 25)}",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
@@ -314,41 +316,57 @@ fun TeacherAvailabilityScreen(
                     color = MaterialTheme.colorScheme.outline
                 )
             } else {
+                val doubleFirstHours = teacherDaySlots
+                    .filter { it.bookedDuration >= 2 }
+                    .map { it.hour }.toSet()
+                val doubleSecondHours = doubleFirstHours.map { it + 0.5 }.toSet()
+                val now = LocalDate.now()
+
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     teacherDaySlots.chunked(4).forEach { rowSlots ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            rowSlots.forEach { slot ->
-                                val now = LocalDate.now()
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            var idx = 0
+                            while (idx < rowSlots.size) {
+                                val slot = rowSlots[idx]
                                 val currentMinute = LocalTime.now().hour * 60 + LocalTime.now().minute
                                 val slotMinute = (slot.hour * 60).toInt()
                                 val slotIsPast = selectedDate.isBefore(now) ||
                                         (selectedDate == now && slotMinute <= currentMinute)
 
-                                TeacherSlotChip(
-                                    slot = slot,
-                                    slotIsPast = slotIsPast,
-                                    onClick = {
-                                        when (slot.status) {
-                                            "PENDING"   -> pendingSlot = slot
-                                            "CONFIRMED" -> {
-                                                // Check call status before opening the dialog
-                                                // so we know whether to show Start or Rejoin
-                                                scope.launch {
-                                                    callInProgress = slot.bookingId?.let {
-                                                        isCallInProgress(it)
-                                                    } ?: false
-                                                    confirmedSlot = slot
-                                                }
-                                            }
-                                            else -> if (!slotIsPast) {
-                                                availabilityViewModel.toggleTeacherSlot(
-                                                    selectedDate.format(dateFormatter),
-                                                    slot.hour
-                                                )
-                                            }
+                                val isDoubleFirst = slot.hour in doubleFirstHours
+                                val nextInRow = if (idx + 1 < rowSlots.size) rowSlots[idx + 1] else null
+                                val isSameRowDouble = isDoubleFirst && nextInRow != null &&
+                                        nextInRow.hour == slot.hour + 0.5
+                                val isFirstOfSplitDouble = isDoubleFirst && !isSameRowDouble
+
+                                fun handleClick() {
+                                    when (slot.status) {
+                                        "PENDING" -> pendingSlot = slot
+                                        "CONFIRMED" -> scope.launch {
+                                            callInProgress = slot.bookingId?.let {
+                                                isCallInProgress(it)
+                                            } ?: false
+                                            confirmedSlot = slot
+                                        }
+                                        else -> if (!slotIsPast) {
+                                            availabilityViewModel.toggleTeacherSlot(
+                                                selectedDate.format(dateFormatter), slot.hour
+                                            )
                                         }
                                     }
+                                }
+
+                                TeacherSlotChip(
+                                    slot       = slot,
+                                    slotIsPast = slotIsPast,
+                                    chipWeight = if (isSameRowDouble) 2f else 1f,
+                                    showArrow  = isFirstOfSplitDouble,
+                                    onClick    = ::handleClick
                                 )
+                                idx += if (isSameRowDouble) 2 else 1
                             }
                         }
                     }
@@ -371,13 +389,16 @@ fun TeacherAvailabilityScreen(
 }
 
 @Composable
-fun TeacherSlotChip(
+fun RowScope.TeacherSlotChip(
     slot: TeacherSlotStatusDto,
     slotIsPast: Boolean,
+    chipWeight: Float = 1f,
+    showArrow: Boolean = false,
     onClick: () -> Unit
 ) {
     val isTrialCompleted = slot.status == "TRIAL_COMPLETED_HAPPY" ||
             slot.status == "TRIAL_COMPLETED_UNHAPPY"
+    val isDouble = chipWeight >= 2f && (slot.status == "CONFIRMED" || slot.status == "PENDING")
 
     val bgColor by animateColorAsState(
         targetValue = when {
@@ -394,40 +415,43 @@ fun TeacherSlotChip(
     )
 
     val isClickable = !isTrialCompleted && (!slotIsPast || slot.status == "CONFIRMED")
+    val conflictBorder = slot.conflictsWithPag && (slot.status == "PENDING" || slot.status == "CONFIRMED")
+    val borderWidth = when {
+        conflictBorder -> 3.dp
+        slot.status == "PENDING" && !slotIsPast -> 2.dp
+        else -> 0.dp
+    }
+    val borderColor = if (conflictBorder) SlotOrange else Color.White.copy(alpha = 0.5f)
 
-    val conflictBorder = slot.conflictsWithPag &&
-            (slot.status == "PENDING" || slot.status == "CONFIRMED")
-
-    val modifier = if (isTrialCompleted) {
-        Modifier
-            .size(width = 88.dp, height = 88.dp)
-            .clip(RoundedCornerShape(0.dp))
-            .background(bgColor)
-    } else {
-        val borderWidth = when {
-            conflictBorder -> 3.dp
-            slot.status == "PENDING" && !slotIsPast -> 2.dp
-            else -> 0.dp
-        }
-        val borderColor = when {
-            conflictBorder -> SlotOrange
-            else -> Color.White.copy(alpha = 0.5f)
-        }
-        Modifier
-            .size(width = 88.dp, height = 88.dp)
+    Box(
+        modifier = Modifier
+            .weight(chipWeight)
+            .height(88.dp)
             .clip(RoundedCornerShape(0.dp))
             .background(bgColor)
             .border(width = borderWidth, color = borderColor, shape = RoundedCornerShape(0.dp))
-            .clickable(enabled = isClickable) { onClick() }
-    }
-
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+            .then(if (isClickable) Modifier.clickable { onClick() } else Modifier),
+        contentAlignment = Alignment.Center
+    ) {
+        val displayText = if (isDouble) {
+            "${formatSlotTime(slot.hour)}▶${formatLessonEnd(slot.hour, 50)}"
+        } else {
+            formatSlotTime(slot.hour)
+        }
         Text(
-            text = formatSlotTime(slot.hour),
+            text = displayText,
             fontWeight = FontWeight.Bold,
-            fontSize = 24.sp,
+            fontSize = if (isDouble) 18.sp else 24.sp,
             color = Color.White
         )
+        if (showArrow) {
+            Text(
+                text = "▶",
+                fontSize = 16.sp,
+                color = Color.White,
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 4.dp)
+            )
+        }
     }
 }
 
