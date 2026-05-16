@@ -437,14 +437,18 @@ fun SlotBookingScreen(
                     }
                 }
             } else {
-                // Single mode: 4-per-row fixed-size chips
+                // Single mode: weight-based chips to match double-mode alignment
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     availableSlots.chunked(4).forEach { rowSlots ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             rowSlots.forEach { slot ->
                                 SlotChip(
                                     slot = slot,
                                     isSelected = selectedSlot == slot,
+                                    modifier = Modifier.weight(1f),
                                     onClick = {
                                         if (!slot.isBooked) {
                                             if (selectedSlot == slot) availabilityViewModel.clearSelectedSlot()
@@ -674,7 +678,8 @@ private fun RowScope.DoubleChip(
 fun SlotChip(
     slot: AvailableSlotDto,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val bgColor by animateColorAsState(
         targetValue = when {
@@ -687,8 +692,8 @@ fun SlotChip(
     )
 
     Box(
-        modifier = Modifier
-            .size(width = 88.dp, height = 88.dp)
+        modifier = modifier
+            .height(88.dp)
             .then(if (isSelected) Modifier.drawWithContent {
                 drawContent()
                 val sw = 4.dp.toPx()
