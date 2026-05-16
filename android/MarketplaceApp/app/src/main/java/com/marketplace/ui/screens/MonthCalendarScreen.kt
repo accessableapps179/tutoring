@@ -156,7 +156,7 @@ fun MonthCalendarScreen(
                                 if (isToday) {
                                     Box(
                                         modifier = Modifier
-                                            .size(34.dp)
+                                            .size(36.dp)
                                             .clip(CircleShape)
                                             .background(Color.Black)
                                     )
