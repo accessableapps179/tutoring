@@ -221,37 +221,30 @@ fun SlotBookingScreen(
             val selectedDateFormatted = selectedDate.format(DateTimeFormatter.ofPattern("d MMMM yyyy"))
             Text(
                 text = "$selectedDayName, $selectedDateFormatted",
-                style = MaterialTheme.typography.titleMedium,
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Bold
             )
 
-            // Selection card — top of page, compact with inline confirm button
-            if (selectedSlot != null) {
-                val slot = selectedSlot!!
-                val durationMinutes = if (isDoubleMode) 50 else 25
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(
-                            text = formatLessonRange(slot.hour, durationMinutes),
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = selectedDateFormatted,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                        )
-                    }
+            // Selection card — always visible, chips never shift
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .padding(horizontal = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (selectedSlot != null) {
+                    val slot = selectedSlot!!
+                    val durationMinutes = if (isDoubleMode) 50 else 25
+                    Text(
+                        text = formatLessonRange(slot.hour, durationMinutes),
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                     Button(
                         onClick = {
                             if (!isBookingLoading) {
@@ -277,6 +270,13 @@ fun SlotBookingScreen(
                             Text("Confirm", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
                     }
+                } else {
+                    Text(
+                        text = "Pick a time",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
+                    )
                 }
             }
 
