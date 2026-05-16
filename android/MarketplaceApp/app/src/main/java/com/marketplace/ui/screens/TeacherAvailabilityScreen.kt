@@ -518,11 +518,7 @@ fun TeacherSlotChip(
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Text(
-            text = when {
-                slot.status == "PENDING"   -> "${formatSlotTime(slot.hour)} ?"
-                slot.status == "CONFIRMED" -> "${formatSlotTime(slot.hour)} ✓"
-                else                       -> formatSlotTime(slot.hour)
-            },
+            text = formatSlotTime(slot.hour),
             fontWeight = FontWeight.Bold,
             fontSize = 24.sp,
             color = Color.White
