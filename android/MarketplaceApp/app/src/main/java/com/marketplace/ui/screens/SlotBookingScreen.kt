@@ -446,7 +446,10 @@ fun SlotBookingScreen(
                                     slot = slot,
                                     isSelected = selectedSlot == slot,
                                     onClick = {
-                                        if (!slot.isBooked) availabilityViewModel.selectSlot(slot)
+                                        if (!slot.isBooked) {
+                                            if (selectedSlot == slot) availabilityViewModel.clearSelectedSlot()
+                                            else availabilityViewModel.selectSlot(slot)
+                                        }
                                     }
                                 )
                             }
