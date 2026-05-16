@@ -250,7 +250,7 @@ fun AppNavGraph() {
             }
             MonthCalendarScreen(
                 teacherName    = Session.pendingTeacherName,
-                onBackClick    = rememberSingleClick { navController.popBackStack() },
+                onBackClick    = { navController.popBackStack() },
                 onDateSelected = { date ->
                     Session.pendingBookingDate = date
                     navController.navigate("book_teacher/$teacherId")
@@ -278,7 +278,7 @@ fun AppNavGraph() {
                 onBackClick = rememberSingleClick { navController.popBackStack() },
                 onCalendarClick = {
                     navController.navigate("month_calendar/$teacherId") {
-                        popUpTo("book_teacher/$teacherId") { inclusive = true }
+                        popUpTo("month_calendar/$teacherId") { inclusive = true }
                     }
                 },
                 onBookingSuccess = {
