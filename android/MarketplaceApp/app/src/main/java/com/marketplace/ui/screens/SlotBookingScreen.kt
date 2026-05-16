@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -566,8 +567,7 @@ private fun RowScope.DoubleChip(
             isSelected && isSecondOfPair -> MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
             isSelected  -> MaterialTheme.colorScheme.primary
             slot.isBooked -> Color(0xFFE53935)
-            canStartDouble -> Color(0xFF4CAF50)
-            else -> Color(0xFF4CAF50).copy(alpha = 0.4f)
+            else -> Color(0xFF4CAF50)
         },
         animationSpec = tween(200),
         label = "doubleChipColor"
@@ -587,6 +587,15 @@ private fun RowScope.DoubleChip(
             fontSize = 13.sp,
             color = Color.White
         )
+        if (!canStartDouble && !slot.isBooked && !isSelected) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .fillMaxHeight()
+                    .width(4.dp)
+                    .background(Color(0xFFE53935))
+            )
+        }
     }
 }
 
