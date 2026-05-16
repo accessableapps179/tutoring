@@ -91,18 +91,8 @@ fun SlotBookingScreen(
     var selectedDuration by remember { mutableStateOf(2) }
 
     var selectedDate by remember { mutableStateOf(Session.pendingBookingDate ?: LocalDate.now()) }
-    var weekOffset by remember { mutableStateOf(0) }
 
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    val today = LocalDate.now()
-
-    fun getWeekStart(offset: Int): LocalDate {
-        val monday = today.minusDays(today.dayOfWeek.value.toLong() - 1)
-        return monday.plusWeeks(offset.toLong())
-    }
-
-    val weekStart = getWeekStart(weekOffset)
-    val weekDays = (0..6).map { weekStart.plusDays(it.toLong()) }
 
     LaunchedEffect(Unit) {
         Session.pendingBookingDate = null
@@ -111,7 +101,7 @@ fun SlotBookingScreen(
         availabilityViewModel.loadSlotsForDate(teacherId, selectedDate.format(dateFormatter))
     }
 
-    LaunchedEffect(selectedDate, weekOffset) {
+    LaunchedEffect(selectedDate) {
         availabilityViewModel.loadSlotsForDate(teacherId, selectedDate.format(dateFormatter))
     }
 
@@ -226,80 +216,6 @@ fun SlotBookingScreen(
                 }
             }
 
-            // Week navigation
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { if (weekOffset > 0) weekOffset-- }, enabled = weekOffset > 0) {
-                    Icon(
-                        imageVector = Icons.Filled.ChevronLeft,
-                        contentDescription = "Previous week",
-                        tint = if (weekOffset > 0) MaterialTheme.colorScheme.primary
-                               else MaterialTheme.colorScheme.outline
-                    )
-                }
-                Text(
-                    text = "${weekStart.format(DateTimeFormatter.ofPattern("d MMM"))} — " +
-                            "${weekStart.plusDays(6).format(DateTimeFormatter.ofPattern("d MMM yyyy"))}",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                IconButton(onClick = { if (weekOffset < 1) weekOffset++ }, enabled = weekOffset < 1) {
-                    Icon(
-                        imageVector = Icons.Filled.ChevronRight,
-                        contentDescription = "Next week",
-                        tint = if (weekOffset < 1) MaterialTheme.colorScheme.primary
-                               else MaterialTheme.colorScheme.outline
-                    )
-                }
-            }
-
-            // Day selector
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                weekDays.forEach { date ->
-                    val isSelected = date == selectedDate
-                    val isPast = date.isBefore(today)
-                    val dayName = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                when {
-                                    isSelected -> MaterialTheme.colorScheme.primary
-                                    isPast -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                                    else -> MaterialTheme.colorScheme.surfaceVariant
-                                }
-                            )
-                            .clickable(enabled = !isPast) { selectedDate = date }
-                            .padding(vertical = 8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = dayName.take(3),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = when {
-                                isSelected -> MaterialTheme.colorScheme.onPrimary
-                                isPast -> MaterialTheme.colorScheme.outline
-                                else -> MaterialTheme.colorScheme.onSurfaceVariant
-                            }
-                        )
-                        Text(
-                            text = "${date.dayOfMonth}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = when {
-                                isSelected -> MaterialTheme.colorScheme.onPrimary
-                                isPast -> MaterialTheme.colorScheme.outline
-                                else -> MaterialTheme.colorScheme.onSurfaceVariant
-                            }
-                        )
-                    }
-                }
-            }
 
             val selectedDayName = selectedDate.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
             val selectedDateFormatted = selectedDate.format(DateTimeFormatter.ofPattern("d MMMM yyyy"))
