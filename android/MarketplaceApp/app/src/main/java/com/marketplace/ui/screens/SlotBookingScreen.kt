@@ -689,13 +689,19 @@ fun SlotChip(
     Box(
         modifier = Modifier
             .size(width = 88.dp, height = 88.dp)
+            .then(if (isSelected) Modifier.drawWithContent {
+                drawContent()
+                val sw = 4.dp.toPx()
+                val half = sw / 2f
+                drawRect(
+                    color = Color.Black,
+                    topLeft = Offset(-half, -half),
+                    size = Size(size.width + sw, size.height + sw),
+                    style = Stroke(width = sw)
+                )
+            } else Modifier)
             .clip(RoundedCornerShape(0.dp))
             .background(bgColor)
-            .border(
-                width = if (isSelected) 2.dp else 0.dp,
-                color = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(0.dp)
-            )
             .clickable(enabled = !slot.isBooked) { onClick() },
         contentAlignment = Alignment.Center
     ) {
