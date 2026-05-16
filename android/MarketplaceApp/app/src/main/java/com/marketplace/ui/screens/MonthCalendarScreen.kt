@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -124,9 +125,10 @@ fun MonthCalendarScreen(
             // Top border
             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color.Black))
 
-            // ─── Calendar grid ────────────────────────────────────────────────
+            // ─── Calendar grid — fills remaining screen height ────────────────
+            Column(modifier = Modifier.fillMaxWidth().weight(1f)) {
             repeat(rows) { rowIdx ->
-                Row(modifier = Modifier.fillMaxWidth()) {
+                Row(modifier = Modifier.fillMaxWidth().weight(1f)) {
                     repeat(7) { colIdx ->
                         val dayNum    = rowIdx * 7 + colIdx - startOffset + 1
                         val validDay  = dayNum in 1..daysInMonth
@@ -137,7 +139,7 @@ fun MonthCalendarScreen(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(52.dp)
+                                .fillMaxHeight()
                                 .border(0.5.dp, Color(0xFFCCCCCC))
                                 .then(
                                     if (validDay && !isPast)
@@ -170,6 +172,7 @@ fun MonthCalendarScreen(
                     }
                 }
             }
+            } // end grid Column
         }
     }
 }
