@@ -391,6 +391,7 @@ fun SlotBookingScreen(
                                         Text(
                                             text = "${formatSlotTime(secondSlot.hour)}▶",
                                             fontSize = 16.sp,
+                                            lineHeight = 16.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color(0xFFFFD600),
                                             modifier = Modifier.align(Alignment.BottomEnd).padding(0.dp)
