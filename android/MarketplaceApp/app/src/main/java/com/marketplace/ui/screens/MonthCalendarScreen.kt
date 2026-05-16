@@ -164,7 +164,7 @@ fun MonthCalendarScreen(
                                 Text(
                                     text = dayNum.toString(),
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 20.sp,
+                                    fontSize = 24.sp,
                                     color = when {
                                         isToday -> Color.White
                                         isPast  -> Color(0xFFBBBBBB)
