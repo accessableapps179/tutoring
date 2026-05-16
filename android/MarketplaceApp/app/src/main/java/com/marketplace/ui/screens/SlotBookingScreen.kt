@@ -642,7 +642,7 @@ private fun RowScope.DoubleChip(
                 text = "▶",
                 fontSize = 20.sp,
                 color = Color.White.copy(alpha = 0.85f),
-                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 4.dp)
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 0.dp)
             )
         }
         if (isSelected && pairedStartHour != null && canStartDouble) {
