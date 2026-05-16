@@ -20,8 +20,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.VideoCall
 import androidx.compose.material3.AlertDialog
@@ -121,7 +119,6 @@ fun TeacherAvailabilityScreen(
     val isLoading by availabilityViewModel.isLoading.collectAsState()
 
     var selectedDate by remember { mutableStateOf(Session.pendingAvailabilityDate ?: LocalDate.now()) }
-    var weekOffset by remember { mutableStateOf(0) }
     var pendingSlot by remember { mutableStateOf<TeacherSlotStatusDto?>(null) }
     var confirmedSlot by remember { mutableStateOf<TeacherSlotStatusDto?>(null) }
     var callInProgress by remember { mutableStateOf(false) }
@@ -129,15 +126,6 @@ fun TeacherAvailabilityScreen(
 
     val scope = rememberCoroutineScope()
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    val today = LocalDate.now()
-
-    fun getWeekStart(offset: Int): LocalDate {
-        val monday = today.minusDays(today.dayOfWeek.value.toLong() - 1)
-        return monday.plusWeeks(offset.toLong())
-    }
-
-    val weekStart = getWeekStart(weekOffset)
-    val weekDays = (0..6).map { weekStart.plusDays(it.toLong()) }
 
     LaunchedEffect(selectedDate) {
         availabilityViewModel.loadTeacherDayView(selectedDate.format(dateFormatter))
@@ -310,103 +298,6 @@ fun TeacherAvailabilityScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = { if (weekOffset > 0) weekOffset-- },
-                    enabled = weekOffset > 0
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.ChevronLeft,
-                        contentDescription = "Previous week",
-                        tint = if (weekOffset > 0) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outline
-                    )
-                }
-
-                Text(
-                    text = "${weekStart.format(DateTimeFormatter.ofPattern("d MMM"))} — " +
-                            "${weekStart.plusDays(6).format(DateTimeFormatter.ofPattern("d MMM yyyy"))}",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
-
-                IconButton(
-                    onClick = { if (weekOffset < 12) weekOffset++ },
-                    enabled = weekOffset < 12
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.ChevronRight,
-                        contentDescription = "Next week",
-                        tint = if (weekOffset < 12) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outline
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                weekDays.forEach { date ->
-                    val isSelected = date == selectedDate
-                    val isPast = date.isBefore(today)
-                    val dayName = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-                    val chipPagWeek = minOf(4, (date.dayOfMonth - 1) / 7 + 1)
-                    val isFirstOfPagWeek = date.dayOfMonth == 1 ||
-                        minOf(4, (date.dayOfMonth - 2) / 7 + 1) != chipPagWeek
-
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(0.dp))
-                            .background(
-                                when {
-                                    isSelected -> MaterialTheme.colorScheme.primary
-                                    isPast     -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                                    else       -> MaterialTheme.colorScheme.surfaceVariant
-                                }
-                            )
-                            .clickable(enabled = !isPast) { selectedDate = date }
-                            .padding(vertical = 8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = dayName.take(3),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = when {
-                                isSelected -> MaterialTheme.colorScheme.onPrimary
-                                isPast     -> MaterialTheme.colorScheme.outline
-                                else       -> MaterialTheme.colorScheme.onSurfaceVariant
-                            }
-                        )
-                        Text(
-                            text = "${date.dayOfMonth}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = when {
-                                isSelected -> MaterialTheme.colorScheme.onPrimary
-                                isPast     -> MaterialTheme.colorScheme.outline
-                                else       -> MaterialTheme.colorScheme.onSurfaceVariant
-                            }
-                        )
-                        Text(
-                            text = if (isFirstOfPagWeek) "Wk$chipPagWeek" else "",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = if (isFirstOfPagWeek) FontWeight.Bold else FontWeight.Normal,
-                            color = when {
-                                isSelected          -> MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                                isFirstOfPagWeek    -> Color(0xFF1565C0)
-                                else                -> MaterialTheme.colorScheme.surface
-                            }
-                        )
-                    }
-                }
-            }
-
             val selectedDayName = selectedDate.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
             val selectedDateFormatted = selectedDate.format(DateTimeFormatter.ofPattern("d MMMM yyyy"))
             val pagWeek = minOf(4, (selectedDate.dayOfMonth - 1) / 7 + 1)
