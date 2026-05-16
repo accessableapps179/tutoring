@@ -348,7 +348,7 @@ fun SlotBookingScreen(
                                     modifier = Modifier
                                         .weight(2f)
                                         .clip(RoundedCornerShape(12.dp))
-                                        .border(3.dp, Color.Black, RoundedCornerShape(12.dp))
+                                        .border(4.dp, Color.Black, RoundedCornerShape(12.dp))
                                         .padding(3.dp)
                                 ) {
                                     Row(
@@ -586,7 +586,7 @@ private fun RowScope.DoubleChip(
             .then(if (isSelected) Modifier.drawWithContent {
                 drawContent()
                 val r = 12.dp.toPx()
-                val sw = 3.dp.toPx()
+                val sw = 4.dp.toPx()
                 val w = size.width
                 val h = size.height
                 val path = Path()
