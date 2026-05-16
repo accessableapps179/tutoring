@@ -535,7 +535,6 @@ private fun DoubleChipInner(
 ) {
     val bgColor by animateColorAsState(
         targetValue = when {
-            isSelected && isSecondChip -> MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
             isSelected -> MaterialTheme.colorScheme.primary
             else -> Color(0xFF4CAF50)
         },
@@ -550,6 +549,15 @@ private fun DoubleChipInner(
         contentAlignment = Alignment.Center
     ) {
         Text(text = time, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
+        if (isSecondChip) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .fillMaxHeight()
+                    .width(4.dp)
+                    .background(Color(0xFFE53935))
+            )
+        }
     }
 }
 
@@ -565,7 +573,6 @@ private fun RowScope.DoubleChip(
     val canStartDouble = !slot.isBooked && (slot.hour + 0.5) in freeHours
     val bgColor by animateColorAsState(
         targetValue = when {
-            isSelected && isSecondOfPair -> MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
             isSelected  -> MaterialTheme.colorScheme.primary
             slot.isBooked -> Color(0xFFE53935)
             else -> Color(0xFF4CAF50)
@@ -588,7 +595,7 @@ private fun RowScope.DoubleChip(
             fontSize = 13.sp,
             color = Color.White
         )
-        if (!canStartDouble && !slot.isBooked && !isSelected) {
+        if ((!canStartDouble && !slot.isBooked && !isSelected) || (isSelected && isSecondOfPair)) {
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
