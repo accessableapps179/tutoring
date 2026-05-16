@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Button
@@ -76,6 +77,7 @@ fun SlotBookingScreen(
     studentName: String,
     onBackClick: () -> Unit,
     onBookingSuccess: () -> Unit,
+    onCalendarClick: (() -> Unit)? = null,
     availabilityViewModel: AvailabilityViewModel = viewModel(),
     bookingViewModel: BookingViewModel = viewModel()
 ) {
@@ -88,7 +90,7 @@ fun SlotBookingScreen(
     val isPostTrial = Session.pendingContactId.isNotEmpty()
     var selectedDuration by remember { mutableStateOf(2) }
 
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var selectedDate by remember { mutableStateOf(Session.pendingBookingDate ?: LocalDate.now()) }
     var weekOffset by remember { mutableStateOf(0) }
 
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -103,6 +105,7 @@ fun SlotBookingScreen(
     val weekDays = (0..6).map { weekStart.plusDays(it.toLong()) }
 
     LaunchedEffect(Unit) {
+        Session.pendingBookingDate = null
         availabilityViewModel.clearSelectedSlot()
         availabilityViewModel.loadHourRange(teacherId)
         availabilityViewModel.loadSlotsForDate(teacherId, selectedDate.format(dateFormatter))
@@ -141,6 +144,17 @@ fun SlotBookingScreen(
                             contentDescription = "Back",
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
+                    }
+                },
+                actions = {
+                    if (onCalendarClick != null) {
+                        IconButton(onClick = onCalendarClick) {
+                            Icon(
+                                imageVector = Icons.Filled.CalendarMonth,
+                                contentDescription = "Month view",
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

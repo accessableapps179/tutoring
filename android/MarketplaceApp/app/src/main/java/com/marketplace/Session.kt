@@ -2,6 +2,7 @@
 package com.marketplace
 
 import com.marketplace.dto.TeacherDto
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
@@ -50,6 +51,9 @@ object Session {
      */
     var pendingContactId: String = ""
 
+    /** Set from MonthCalendarScreen when the student picks a date before booking. */
+    var pendingBookingDate: LocalDate? = null
+
     // ─── Debug / Time override ─────────────────────────────────────────────────
 
     /** Set from the main screen to simulate a different date/time during testing. */
@@ -78,6 +82,7 @@ object Session {
         pendingCallName               = ""
         pendingTeacherName            = ""
         pendingContactId              = ""
+        pendingBookingDate            = null
         debugDateTime                 = null
     }
 }

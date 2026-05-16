@@ -19,6 +19,7 @@ import com.marketplace.ui.screens.LobbyScreen
 import com.marketplace.ui.screens.LoginScreen
 import com.marketplace.ui.screens.LogoutScreen
 import com.marketplace.ui.screens.MessagesListScreen
+import com.marketplace.ui.screens.MonthCalendarScreen
 import com.marketplace.ui.screens.MyAccountScreen
 import com.marketplace.ui.screens.MyBookingsScreen
 import com.marketplace.ui.screens.NotHappyFunnelScreen
@@ -147,7 +148,7 @@ fun AppNavGraph() {
                 onMyTutorClick = { teacherId, teacherName, contactId ->
                     Session.pendingTeacherName = teacherName
                     Session.pendingContactId = contactId
-                    navController.navigate("book_teacher/$teacherId")
+                    navController.navigate("month_calendar/$teacherId")
                 },
                 onManageProfileClick      = { navController.navigate("teacher_profile/$userId") },
                 onManageAvailabilityClick = { navController.navigate("teacher_availability/$userId") },
@@ -187,7 +188,7 @@ fun AppNavGraph() {
                     {
                         Session.pendingTeacherName = teacher.name
                         Session.pendingContactId = ""
-                        navController.navigate("book_teacher/${teacher.id}")
+                        navController.navigate("month_calendar/${teacher.id}")
                     }
                 } else null,
                 onMessageClick = { contactId ->
@@ -238,6 +239,25 @@ fun AppNavGraph() {
 
         // ─── Booking ───────────────────────────────────────────────────────────
 
+        composable(
+            route = "month_calendar/{teacherId}",
+            arguments = listOf(navArgument("teacherId") { type = NavType.StringType })
+        ) { back ->
+            val teacherId = back.arguments?.getString("teacherId") ?: ""
+            if (Session.pendingTeacherName.isEmpty()) {
+                navController.popBackStack()
+                return@composable
+            }
+            MonthCalendarScreen(
+                teacherName    = Session.pendingTeacherName,
+                onBackClick    = rememberSingleClick { navController.popBackStack() },
+                onDateSelected = { date ->
+                    Session.pendingBookingDate = date
+                    navController.navigate("book_teacher/$teacherId")
+                }
+            )
+        }
+
         // Only teacherId (UUID) in URL. Teacher name and student name come from Session.
         composable(
             route = "book_teacher/{teacherId}",
@@ -256,6 +276,7 @@ fun AppNavGraph() {
                 teacherName = Session.pendingTeacherName,
                 studentName = Session.name,
                 onBackClick = rememberSingleClick { navController.popBackStack() },
+                onCalendarClick = { navController.navigate("month_calendar/$teacherId") },
                 onBookingSuccess = {
                     Session.pendingContactId = ""
                     navController.navigate("booking_success") {
@@ -486,7 +507,7 @@ fun AppNavGraph() {
             val teacherId = back.arguments?.getString("teacherId") ?: ""
             PostTrialScreen(
                 teacherName = Session.pendingTeacherName,
-                onBookNow   = { navController.navigate("book_teacher/$teacherId") },
+                onBookNow   = { navController.navigate("month_calendar/$teacherId") },
                 onBookLater = { navController.navigateHome() }
             )
         }
