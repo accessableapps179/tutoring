@@ -87,7 +87,8 @@ fun MonthCalendarScreen(
     ) { padding ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .fillMaxHeight(0.75f)
                 .padding(padding)
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
