@@ -144,7 +144,7 @@ fun MonthCalendarScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
-                                .border(0.5.dp, Color(0xFFCCCCCC))
+                                .border(1.5.dp, Color(0xFFCCCCCC))
                                 .then(
                                     if (validDay && !isPast)
                                         Modifier.clickable { onDateSelected(date!!) }
