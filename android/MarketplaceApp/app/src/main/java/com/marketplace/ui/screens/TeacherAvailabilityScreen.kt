@@ -51,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.marketplace.Session
 import com.marketplace.api.RetrofitClient
 import com.marketplace.dto.TeacherSlotStatusDto
 import com.marketplace.viewmodel.AvailabilityViewModel
@@ -117,7 +118,7 @@ fun TeacherAvailabilityScreen(
     val teacherDaySlots by availabilityViewModel.teacherDaySlots.collectAsState()
     val isLoading by availabilityViewModel.isLoading.collectAsState()
 
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var selectedDate by remember { mutableStateOf(Session.pendingAvailabilityDate ?: LocalDate.now()) }
     var weekOffset by remember { mutableStateOf(0) }
     var pendingSlot by remember { mutableStateOf<TeacherSlotStatusDto?>(null) }
     var confirmedSlot by remember { mutableStateOf<TeacherSlotStatusDto?>(null) }

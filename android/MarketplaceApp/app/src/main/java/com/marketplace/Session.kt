@@ -54,6 +54,9 @@ object Session {
     /** Set from MonthCalendarScreen when the student picks a date before booking. */
     var pendingBookingDate: LocalDate? = null
 
+    /** Set from the teacher month calendar before navigating to TeacherAvailabilityScreen. */
+    var pendingAvailabilityDate: LocalDate? = null
+
     // ─── Debug / Time override ─────────────────────────────────────────────────
 
     /** Set from the main screen to simulate a different date/time during testing. */
@@ -83,6 +86,7 @@ object Session {
         pendingTeacherName            = ""
         pendingContactId              = ""
         pendingBookingDate            = null
+        pendingAvailabilityDate       = null
         debugDateTime                 = null
     }
 }

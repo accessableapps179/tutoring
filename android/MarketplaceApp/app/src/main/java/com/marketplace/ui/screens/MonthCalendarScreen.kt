@@ -51,6 +51,7 @@ private val CAL_DAY_HEADERS = listOf("M", "T", "W", "T", "F", "S", "S")
 @Composable
 fun MonthCalendarScreen(
     teacherName: String,
+    title: String? = null,
     onBackClick: () -> Unit,
     onDateSelected: (LocalDate) -> Unit
 ) {
@@ -68,7 +69,7 @@ fun MonthCalendarScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Book with $teacherName", fontWeight = FontWeight.Bold) },
+                title = { Text(title ?: "Book with $teacherName", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(

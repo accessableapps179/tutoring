@@ -151,7 +151,7 @@ fun AppNavGraph() {
                     navController.navigate("month_calendar/$teacherId")
                 },
                 onManageProfileClick      = { navController.navigate("teacher_profile/$userId") },
-                onManageAvailabilityClick = { navController.navigate("teacher_availability/$userId") },
+                onManageAvailabilityClick = { navController.navigate("teacher_month_calendar/$userId") },
                 onMessagesClick  = { navController.navigate("messages_list/$role/$userId") },
                 onMyAccountClick = { navController.navigate("my_account/$role") },
                 onLogoutClick    = { navController.navigate("logout") },
@@ -209,6 +209,22 @@ fun AppNavGraph() {
                 userId      = back.arguments?.getString("userId") ?: "",
                 userName    = Session.name,
                 onBackClick = rememberSingleClick { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = "teacher_month_calendar/{userId}",
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
+        ) { back ->
+            val userId = back.arguments?.getString("userId") ?: ""
+            MonthCalendarScreen(
+                teacherName    = Session.name,
+                title          = "My Calendar",
+                onBackClick    = { navController.popBackStack() },
+                onDateSelected = { date ->
+                    Session.pendingAvailabilityDate = date
+                    navController.navigate("teacher_availability/$userId")
+                }
             )
         }
 
