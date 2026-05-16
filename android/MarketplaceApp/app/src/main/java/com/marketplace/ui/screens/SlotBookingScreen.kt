@@ -542,7 +542,7 @@ private fun DoubleChipInner(
     )
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(0.dp))
             .background(bgColor)
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
         contentAlignment = Alignment.Center
@@ -585,7 +585,6 @@ private fun RowScope.DoubleChip(
             .height(44.dp)
             .then(if (isSelected) Modifier.drawWithContent {
                 drawContent()
-                val r = 12.dp.toPx()
                 val sw = 4.dp.toPx()
                 val w = size.width
                 val h = size.height
@@ -605,7 +604,7 @@ private fun RowScope.DoubleChip(
                 }
                 drawPath(path, Color.Black, style = Stroke(width = sw))
             } else Modifier)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(0.dp))
             .background(bgColor)
             .clickable(enabled = canStartDouble) { onSelect(slot) },
         contentAlignment = Alignment.Center
@@ -647,12 +646,12 @@ fun SlotChip(
     Box(
         modifier = Modifier
             .size(width = 80.dp, height = 44.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(0.dp))
             .background(bgColor)
             .border(
                 width = if (isSelected) 2.dp else 0.dp,
                 color = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(0.dp)
             )
             .clickable(enabled = !slot.isBooked) { onClick() },
         contentAlignment = Alignment.Center
