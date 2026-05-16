@@ -24,7 +24,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Button
@@ -52,6 +51,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -350,7 +350,9 @@ fun SlotBookingScreen(
                                 Box(
                                     modifier = Modifier
                                         .weight(2f)
-                                        .height(60.dp)
+                                        .height(72.dp)
+                                        .clickable { availabilityViewModel.clearSelectedSlot() }
+                                        .background(MaterialTheme.colorScheme.primary)
                                         .drawWithContent {
                                             drawContent()
                                             val sw = 4.dp.toPx()
@@ -361,26 +363,37 @@ fun SlotBookingScreen(
                                                 size = Size(size.width + sw, size.height + sw),
                                                 style = Stroke(width = sw)
                                             )
-                                        }
+                                            drawLine(
+                                                color = Color.White.copy(alpha = 0.25f),
+                                                start = Offset(size.width / 2f, 0f),
+                                                end = Offset(size.width / 2f, size.height),
+                                                strokeWidth = 1.dp.toPx(),
+                                                cap = StrokeCap.Butt
+                                            )
+                                        },
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(0.dp),
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        DoubleChipInner(
-                                            time = formatSlotTime(rowSlots[firstIdx].hour),
-                                            isSelected = true,
-                                            modifier = Modifier.weight(1f).height(60.dp)
+                                    Text(
+                                        text = "${formatSlotTime(rowSlots[firstIdx].hour)}▶${formatLessonEnd(rowSlots[firstIdx].hour, 50)}",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        color = Color.White
+                                    )
+                                    if (secondCanShift) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxHeight()
+                                                .fillMaxWidth(0.5f)
+                                                .align(Alignment.CenterEnd)
+                                                .background(Color.White.copy(alpha = 0.08f))
+                                                .clickable { availabilityViewModel.selectSlot(secondSlot) }
                                         )
-                                        DoubleChipInner(
-                                            time = formatLessonEnd(rowSlots[firstIdx].hour, 50),
-                                            isSelected = true,
-                                            isSecondChip = secondIsLightBlue,
-                                            subTime = formatSlotTime(secondSlot.hour),
-                                            modifier = Modifier.weight(1f).height(60.dp),
-                                            onClick = if (secondCanShift) {
-                                                { availabilityViewModel.selectSlot(secondSlot) }
-                                            } else null
+                                        Text(
+                                            text = "${formatSlotTime(secondSlot.hour)}▶",
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFFFFD600),
+                                            modifier = Modifier.align(Alignment.BottomEnd).padding(0.dp)
                                         )
                                     }
                                 }
@@ -412,7 +425,8 @@ fun SlotBookingScreen(
                                         isFirstOfPair = isFirstChip,
                                         pairedStartHour = if (isSecondChip) selectedFirstHour else null,
                                         freeHours = freeHours,
-                                        onSelect = { availabilityViewModel.selectSlot(it) }
+                                        onSelect = { availabilityViewModel.selectSlot(it) },
+                                        onDeselect = { availabilityViewModel.clearSelectedSlot() }
                                     )
                                 }
                                 // pad last row to keep chip widths consistent
@@ -572,7 +586,8 @@ private fun RowScope.DoubleChip(
     isFirstOfPair: Boolean = false,
     pairedStartHour: Double? = null,
     freeHours: Set<Double>,
-    onSelect: (AvailableSlotDto) -> Unit
+    onSelect: (AvailableSlotDto) -> Unit,
+    onDeselect: (() -> Unit)? = null
 ) {
     val canStartDouble = !slot.isBooked && (slot.hour + 0.5) in freeHours
     val bgColor by animateColorAsState(
@@ -587,7 +602,7 @@ private fun RowScope.DoubleChip(
     Box(
         modifier = Modifier
             .weight(1f)
-            .height(60.dp)
+            .height(72.dp)
             .then(if (isSelected) Modifier.drawWithContent {
                 drawContent()
                 val sw = 4.dp.toPx()
@@ -611,7 +626,9 @@ private fun RowScope.DoubleChip(
             } else Modifier)
             .clip(RoundedCornerShape(0.dp))
             .background(bgColor)
-            .clickable(enabled = canStartDouble) { onSelect(slot) },
+            .clickable(enabled = canStartDouble || (isSelected && isFirstOfPair)) {
+                if (isSelected && isFirstOfPair) onDeselect?.invoke() else onSelect(slot)
+            },
         contentAlignment = Alignment.Center
     ) {
         val chipText = when {
@@ -619,23 +636,21 @@ private fun RowScope.DoubleChip(
             else -> formatSlotTime(slot.hour)
         }
         Text(text = chipText, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.White)
-        if (isSelected && pairedStartHour != null) {
+        if (isSelected && isFirstOfPair) {
             Text(
-                text = formatSlotTime(slot.hour),
-                fontSize = 10.sp,
-                color = Color.White.copy(alpha = 0.6f),
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 3.dp)
+                text = "▶",
+                fontSize = 16.sp,
+                color = Color.White.copy(alpha = 0.85f),
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 4.dp)
             )
         }
-        if (isSelected && isFirstOfPair) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.75f),
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(2.dp)
-                    .size(10.dp)
+        if (isSelected && pairedStartHour != null && canStartDouble) {
+            Text(
+                text = "${formatSlotTime(slot.hour)}▶",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFFFD600),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(0.dp)
             )
         }
         if (!canStartDouble && !isFirstOfPair && !slot.isBooked) {
