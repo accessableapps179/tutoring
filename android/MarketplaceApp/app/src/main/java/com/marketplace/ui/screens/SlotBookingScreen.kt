@@ -457,6 +457,9 @@ fun SlotBookingScreen(
                                     }
                                 )
                             }
+                            repeat(4 - rowSlots.size) {
+                                Box(modifier = Modifier.weight(1f).height(88.dp))
+                            }
                         }
                     }
                 }
