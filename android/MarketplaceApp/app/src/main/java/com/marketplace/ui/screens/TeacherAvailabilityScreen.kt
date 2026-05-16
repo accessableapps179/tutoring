@@ -337,7 +337,7 @@ fun TeacherAvailabilityScreen(
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(0.dp))
                             .background(
                                 when {
                                     isSelected -> MaterialTheme.colorScheme.primary
@@ -485,7 +485,7 @@ fun TeacherSlotChip(
     val modifier = if (isTrialCompleted) {
         Modifier
             .size(width = 80.dp, height = 44.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(0.dp))
             .background(bgColor)
     } else {
         val borderWidth = when {
@@ -499,9 +499,9 @@ fun TeacherSlotChip(
         }
         Modifier
             .size(width = 80.dp, height = 44.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(0.dp))
             .background(bgColor)
-            .border(width = borderWidth, color = borderColor, shape = RoundedCornerShape(12.dp))
+            .border(width = borderWidth, color = borderColor, shape = RoundedCornerShape(0.dp))
             .clickable(enabled = isClickable) { onClick() }
     }
 
