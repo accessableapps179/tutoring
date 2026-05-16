@@ -346,10 +346,15 @@ fun TeacherAvailabilityScreen(
                                     when (slot.status) {
                                         "PENDING" -> pendingSlot = slot
                                         "CONFIRMED" -> scope.launch {
-                                            callInProgress = slot.bookingId?.let {
+                                            // clicking the 2nd chip of a split double should open
+                                            // the dialog for the 1st chip (correct time + duration)
+                                            val effectiveSlot = if (slot.hour in doubleSecondHours) {
+                                                teacherDaySlots.firstOrNull { it.hour == slot.hour - 0.5 } ?: slot
+                                            } else slot
+                                            callInProgress = effectiveSlot.bookingId?.let {
                                                 isCallInProgress(it)
                                             } ?: false
-                                            confirmedSlot = slot
+                                            confirmedSlot = effectiveSlot
                                         }
                                         else -> if (!slotIsPast) {
                                             availabilityViewModel.toggleTeacherSlot(
@@ -360,11 +365,12 @@ fun TeacherAvailabilityScreen(
                                 }
 
                                 TeacherSlotChip(
-                                    slot       = slot,
-                                    slotIsPast = slotIsPast,
-                                    chipWeight = if (isSameRowDouble) 2f else 1f,
-                                    showArrow  = isFirstOfSplitDouble,
-                                    onClick    = ::handleClick
+                                    slot           = slot,
+                                    slotIsPast     = slotIsPast,
+                                    chipWeight     = if (isSameRowDouble) 2f else 1f,
+                                    showArrow      = isFirstOfSplitDouble,
+                                    splitStartHour = if (slot.hour in doubleSecondHours) slot.hour - 0.5 else null,
+                                    onClick        = ::handleClick
                                 )
                                 idx += if (isSameRowDouble) 2 else 1
                             }
@@ -394,6 +400,7 @@ fun RowScope.TeacherSlotChip(
     slotIsPast: Boolean,
     chipWeight: Float = 1f,
     showArrow: Boolean = false,
+    splitStartHour: Double? = null,
     onClick: () -> Unit
 ) {
     val isTrialCompleted = slot.status == "TRIAL_COMPLETED_HAPPY" ||
@@ -433,15 +440,15 @@ fun RowScope.TeacherSlotChip(
             .then(if (isClickable) Modifier.clickable { onClick() } else Modifier),
         contentAlignment = Alignment.Center
     ) {
-        val displayText = if (isDouble) {
-            "${formatSlotTime(slot.hour)}▶${formatLessonEnd(slot.hour, 50)}"
-        } else {
-            formatSlotTime(slot.hour)
+        val displayText = when {
+            isDouble -> "${formatSlotTime(slot.hour)}▶${formatLessonEnd(slot.hour, 50)}"
+            splitStartHour != null -> formatLessonEnd(splitStartHour, 50)
+            else -> formatSlotTime(slot.hour)
         }
         Text(
             text = displayText,
             fontWeight = FontWeight.Bold,
-            fontSize = if (isDouble) 18.sp else 24.sp,
+            fontSize = if (isDouble) 22.sp else 24.sp,
             color = Color.White
         )
         if (showArrow) {
@@ -449,7 +456,7 @@ fun RowScope.TeacherSlotChip(
                 text = "▶",
                 fontSize = 16.sp,
                 color = Color.White,
-                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 4.dp)
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 0.dp)
             )
         }
     }

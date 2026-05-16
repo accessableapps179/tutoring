@@ -124,6 +124,29 @@ fun SlotBookingScreen(
     } else emptySet()
 
     val bookedHours = availableSlots.filter { it.isBooked }.map { it.hour }.toSet()
+    val splitDoubleSecondHours = availableSlots
+        .filter { it.isBooked && it.bookedDuration >= 2 }
+        .map { it.hour + 0.5 }
+        .toSet()
+
+    // Chunked into rows of 4, but a booked double-first is never allowed to be
+    // the last slot in a row — bump it to start the next row so the pair always
+    // lands in the same row and renders as the normal merged block.
+    val smartChunks: List<List<AvailableSlotDto>> = buildList {
+        val current = mutableListOf<AvailableSlotDto>()
+        for (slot in availableSlots) {
+            if (current.size == 3 && slot.isBooked && slot.bookedDuration >= 2) {
+                add(current.toList())
+                current.clear()
+            }
+            current.add(slot)
+            if (current.size == 4) {
+                add(current.toList())
+                current.clear()
+            }
+        }
+        if (current.isNotEmpty()) add(current.toList())
+    }
 
     Scaffold(
         topBar = {
@@ -308,7 +331,7 @@ fun SlotBookingScreen(
             } else if (isDoubleMode) {
                 // Double mode: normal grid, rectangle appears only around the selected pair
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    availableSlots.chunked(4).forEach { rowSlots ->
+                    smartChunks.forEach { rowSlots ->
                         val firstIdx = if (selectedFirstHour != null)
                             rowSlots.indexOfFirst { it.hour == selectedFirstHour } else -1
                         val secondIdx = if (selectedSecondHour != null)
@@ -316,7 +339,7 @@ fun SlotBookingScreen(
                         val pairInRow = firstIdx >= 0 && secondIdx == firstIdx + 1
 
                         val bookedFirstIdx = rowSlots.indexOfFirst { it.isBooked && it.bookedDuration >= 2 }
-                        val bookedPairInRow = bookedFirstIdx >= 0
+                        val bookedPairInRow = bookedFirstIdx >= 0 && bookedFirstIdx + 1 < rowSlots.size
 
                         if (pairInRow) {
                             // Row contains consecutive selected pair — draw border around them
@@ -324,14 +347,35 @@ fun SlotBookingScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                // chips before the pair
-                                for (i in 0 until firstIdx) {
-                                    DoubleChip(
-                                        slot = rowSlots[i],
-                                        isSelected = false,
-                                        freeHours = freeHours,
-                                        onSelect = { availabilityViewModel.selectSlot(it) }
-                                    )
+                                // chips before the pair — render booked pairs as merged block
+                                var bIdx = 0
+                                while (bIdx < firstIdx) {
+                                    val s = rowSlots[bIdx]
+                                    if (s.isBooked && s.bookedDuration >= 2 &&
+                                            bIdx + 1 < firstIdx && rowSlots[bIdx + 1].isBooked) {
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(2f).height(88.dp)
+                                                .background(Color(0xFFE53935))
+                                                .drawWithContent {
+                                                    drawContent()
+                                                    drawLine(Color.White.copy(alpha = 0.25f),
+                                                        Offset(size.width / 2f, 0f),
+                                                        Offset(size.width / 2f, size.height),
+                                                        strokeWidth = 1.dp.toPx(), cap = StrokeCap.Butt)
+                                                },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("${formatSlotTime(s.hour)}▶${formatLessonEnd(s.hour, 50)}",
+                                                fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Color.White)
+                                        }
+                                        bIdx += 2
+                                    } else {
+                                        DoubleChip(slot = s, isSelected = false,
+                                            splitStartHour = if (s.isBooked && s.hour in splitDoubleSecondHours) s.hour - 0.5 else null,
+                                            freeHours = freeHours, onSelect = { availabilityViewModel.selectSlot(it) })
+                                        bIdx += 1
+                                    }
                                 }
                                 // bordered pair
                                 val secondSlot = rowSlots[secondIdx]
@@ -389,14 +433,35 @@ fun SlotBookingScreen(
                                         )
                                     }
                                 }
-                                // chips after the pair
-                                for (i in secondIdx + 1 until rowSlots.size) {
-                                    DoubleChip(
-                                        slot = rowSlots[i],
-                                        isSelected = false,
-                                        freeHours = freeHours,
-                                        onSelect = { availabilityViewModel.selectSlot(it) }
-                                    )
+                                // chips after the pair — render booked pairs as merged block
+                                var aIdx = secondIdx + 1
+                                while (aIdx < rowSlots.size) {
+                                    val s = rowSlots[aIdx]
+                                    if (s.isBooked && s.bookedDuration >= 2 &&
+                                            aIdx + 1 < rowSlots.size && rowSlots[aIdx + 1].isBooked) {
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(2f).height(88.dp)
+                                                .background(Color(0xFFE53935))
+                                                .drawWithContent {
+                                                    drawContent()
+                                                    drawLine(Color.White.copy(alpha = 0.25f),
+                                                        Offset(size.width / 2f, 0f),
+                                                        Offset(size.width / 2f, size.height),
+                                                        strokeWidth = 1.dp.toPx(), cap = StrokeCap.Butt)
+                                                },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("${formatSlotTime(s.hour)}▶${formatLessonEnd(s.hour, 50)}",
+                                                fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Color.White)
+                                        }
+                                        aIdx += 2
+                                    } else {
+                                        DoubleChip(slot = s, isSelected = false,
+                                            splitStartHour = if (s.isBooked && s.hour in splitDoubleSecondHours) s.hour - 0.5 else null,
+                                            freeHours = freeHours, onSelect = { availabilityViewModel.selectSlot(it) })
+                                        aIdx += 1
+                                    }
                                 }
                                 // invisible spacers so all rows have the same total weight (4)
                                 val filled = (firstIdx) + 2 + (rowSlots.size - secondIdx - 1)
@@ -419,6 +484,7 @@ fun SlotBookingScreen(
                                         isFirstOfPair = isFirstChip,
                                         isFirstOfBookedPair = s.isBooked && s.bookedDuration >= 2,
                                         pairedStartHour = if (isSecondChip) selectedFirstHour else null,
+                                        splitStartHour = if (s.isBooked && s.hour in splitDoubleSecondHours) s.hour - 0.5 else null,
                                         freeHours = freeHours,
                                         onSelect = { availabilityViewModel.selectSlot(it) },
                                         onDeselect = { availabilityViewModel.clearSelectedSlot() }
@@ -458,6 +524,7 @@ fun SlotBookingScreen(
                                         isFirstOfPair = isFirstChip,
                                         isFirstOfBookedPair = s.isBooked && s.bookedDuration >= 2,
                                         pairedStartHour = if (isSecondChip) selectedFirstHour else null,
+                                        splitStartHour = if (s.isBooked && s.hour in splitDoubleSecondHours) s.hour - 0.5 else null,
                                         freeHours = freeHours,
                                         onSelect = { availabilityViewModel.selectSlot(it) },
                                         onDeselect = { availabilityViewModel.clearSelectedSlot() }
@@ -481,6 +548,7 @@ fun SlotBookingScreen(
                                         isFirstOfPair = isFirstChip,
                                         isFirstOfBookedPair = slot.isBooked && slot.bookedDuration >= 2,
                                         pairedStartHour = if (isSecondChip) selectedFirstHour else null,
+                                        splitStartHour = if (slot.isBooked && slot.hour in splitDoubleSecondHours) slot.hour - 0.5 else null,
                                         freeHours = freeHours,
                                         onSelect = { availabilityViewModel.selectSlot(it) },
                                         onDeselect = { availabilityViewModel.clearSelectedSlot() }
@@ -495,9 +563,10 @@ fun SlotBookingScreen(
             } else {
                 // Single mode: weight-based chips to match double-mode alignment
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    availableSlots.chunked(4).forEach { rowSlots ->
+                    smartChunks.forEach { rowSlots ->
                         val sBookedFirstIdx = rowSlots.indexOfFirst { it.isBooked && it.bookedDuration >= 2 }
-                        val sBookedPairInRow = sBookedFirstIdx >= 0
+                        val sBookedPairInRow = sBookedFirstIdx >= 0 && sBookedFirstIdx + 1 < rowSlots.size
+                        val sIsSplitFirst = sBookedFirstIdx >= 0 && sBookedFirstIdx + 1 >= rowSlots.size
 
                         if (sBookedPairInRow) {
                             val sSecondIdx = sBookedFirstIdx + 1
@@ -559,28 +628,72 @@ fun SlotBookingScreen(
                                 repeat(4 - sFilled) { Box(modifier = Modifier.weight(1f).height(88.dp)) }
                             }
                         } else {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            rowSlots.forEach { slot ->
-                                SlotChip(
-                                    slot = slot,
-                                    isSelected = selectedSlot == slot,
-                                    modifier = Modifier.weight(1f),
-                                    onClick = {
-                                        if (!slot.isBooked) {
-                                            if (selectedSlot == slot) availabilityViewModel.clearSelectedSlot()
-                                            else availabilityViewModel.selectSlot(slot)
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                rowSlots.forEachIndexed { idx, slot ->
+                                    val isSplitFirstChip = sIsSplitFirst && idx == sBookedFirstIdx
+                                    val isSplitSecondChip = slot.isBooked && slot.hour in splitDoubleSecondHours
+                                    when {
+                                        isSplitFirstChip -> {
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .height(88.dp)
+                                                    .background(Color(0xFFE53935)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = formatSlotTime(slot.hour),
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 24.sp,
+                                                    color = Color.White
+                                                )
+                                                Text(
+                                                    text = "▶",
+                                                    fontSize = 16.sp,
+                                                    color = Color.White,
+                                                    modifier = Modifier.align(Alignment.CenterEnd).padding(end = 4.dp)
+                                                )
+                                            }
+                                        }
+                                        isSplitSecondChip -> {
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .height(88.dp)
+                                                    .background(Color(0xFFE53935)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = formatLessonEnd(slot.hour - 0.5, 50),
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 24.sp,
+                                                    color = Color.White
+                                                )
+                                            }
+                                        }
+                                        else -> {
+                                            SlotChip(
+                                                slot = slot,
+                                                isSelected = selectedSlot == slot,
+                                                modifier = Modifier.weight(1f),
+                                                onClick = {
+                                                    if (!slot.isBooked) {
+                                                        if (selectedSlot == slot) availabilityViewModel.clearSelectedSlot()
+                                                        else availabilityViewModel.selectSlot(slot)
+                                                    }
+                                                }
+                                            )
                                         }
                                     }
-                                )
-                            }
-                            repeat(4 - rowSlots.size) {
-                                Box(modifier = Modifier.weight(1f).height(88.dp))
+                                }
+                                repeat(4 - rowSlots.size) {
+                                    Box(modifier = Modifier.weight(1f).height(88.dp))
+                                }
                             }
                         }
-                        } // end else (no booked pair)
                     }
                 }
             }
@@ -652,6 +765,7 @@ private fun RowScope.DoubleChip(
     isFirstOfPair: Boolean = false,
     isFirstOfBookedPair: Boolean = false,
     pairedStartHour: Double? = null,
+    splitStartHour: Double? = null,
     freeHours: Set<Double>,
     onSelect: (AvailableSlotDto) -> Unit,
     onDeselect: (() -> Unit)? = null
@@ -700,6 +814,7 @@ private fun RowScope.DoubleChip(
     ) {
         val chipText = when {
             isSelected && pairedStartHour != null -> formatLessonEnd(pairedStartHour, 50)
+            splitStartHour != null -> formatLessonEnd(splitStartHour, 50)
             else -> formatSlotTime(slot.hour)
         }
         Text(text = chipText, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Color.White)
