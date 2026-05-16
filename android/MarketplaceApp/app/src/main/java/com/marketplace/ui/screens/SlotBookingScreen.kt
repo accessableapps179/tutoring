@@ -350,7 +350,7 @@ fun SlotBookingScreen(
                                 Box(
                                     modifier = Modifier
                                         .weight(2f)
-                                        .height(80.dp)
+                                        .height(88.dp)
                                         .clickable { availabilityViewModel.clearSelectedSlot() }
                                         .background(MaterialTheme.colorScheme.primary)
                                         .drawWithContent {
@@ -376,7 +376,7 @@ fun SlotBookingScreen(
                                     Text(
                                         text = "${formatSlotTime(rowSlots[firstIdx].hour)}▶${formatLessonEnd(rowSlots[firstIdx].hour, 50)}",
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 20.sp,
+                                        fontSize = 22.sp,
                                         color = Color.White
                                     )
                                     if (secondCanShift) {
@@ -390,8 +390,8 @@ fun SlotBookingScreen(
                                         )
                                         Text(
                                             text = "${formatSlotTime(secondSlot.hour)}▶",
-                                            fontSize = 16.sp,
-                                            lineHeight = 16.sp,
+                                            fontSize = 18.sp,
+                                            lineHeight = 18.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color(0xFFFFD600),
                                             modifier = Modifier.align(Alignment.BottomEnd).padding(0.dp)
@@ -558,7 +558,7 @@ private fun DoubleChipInner(
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = time, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Color.White)
+        Text(text = time, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Color.White)
         if (subTime != null) {
             Text(
                 text = subTime,
@@ -603,7 +603,7 @@ private fun RowScope.DoubleChip(
     Box(
         modifier = Modifier
             .weight(1f)
-            .height(80.dp)
+            .height(88.dp)
             .then(if (isSelected) Modifier.drawWithContent {
                 drawContent()
                 val sw = 4.dp.toPx()
@@ -636,11 +636,11 @@ private fun RowScope.DoubleChip(
             isSelected && pairedStartHour != null -> formatLessonEnd(pairedStartHour, 50)
             else -> formatSlotTime(slot.hour)
         }
-        Text(text = chipText, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Color.White)
+        Text(text = chipText, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Color.White)
         if (isSelected && isFirstOfPair) {
             Text(
                 text = "▶",
-                fontSize = 18.sp,
+                fontSize = 20.sp,
                 color = Color.White.copy(alpha = 0.85f),
                 modifier = Modifier.align(Alignment.CenterEnd).padding(end = 4.dp)
             )
@@ -648,7 +648,7 @@ private fun RowScope.DoubleChip(
         if (isSelected && pairedStartHour != null && canStartDouble) {
             Text(
                 text = "${formatSlotTime(slot.hour)}▶",
-                fontSize = 16.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFFFD600),
                 modifier = Modifier.align(Alignment.BottomEnd).padding(0.dp)
@@ -684,7 +684,7 @@ fun SlotChip(
 
     Box(
         modifier = Modifier
-            .size(width = 80.dp, height = 44.dp)
+            .size(width = 88.dp, height = 48.dp)
             .clip(RoundedCornerShape(0.dp))
             .background(bgColor)
             .border(
@@ -698,7 +698,7 @@ fun SlotChip(
         Text(
             text = formatSlotTime(slot.hour),
             fontWeight = FontWeight.Bold,
-            fontSize = 22.sp,
+            fontSize = 24.sp,
             color = Color.White
         )
     }

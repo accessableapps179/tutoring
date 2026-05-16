@@ -495,7 +495,7 @@ fun TeacherSlotChip(
 
     val modifier = if (isTrialCompleted) {
         Modifier
-            .size(width = 80.dp, height = 80.dp)
+            .size(width = 88.dp, height = 88.dp)
             .clip(RoundedCornerShape(0.dp))
             .background(bgColor)
     } else {
@@ -509,7 +509,7 @@ fun TeacherSlotChip(
             else -> Color.White.copy(alpha = 0.5f)
         }
         Modifier
-            .size(width = 80.dp, height = 80.dp)
+            .size(width = 88.dp, height = 88.dp)
             .clip(RoundedCornerShape(0.dp))
             .background(bgColor)
             .border(width = borderWidth, color = borderColor, shape = RoundedCornerShape(0.dp))
@@ -524,7 +524,7 @@ fun TeacherSlotChip(
                 else                       -> formatSlotTime(slot.hour)
             },
             fontWeight = FontWeight.Bold,
-            fontSize = 22.sp,
+            fontSize = 24.sp,
             color = Color.White
         )
     }
