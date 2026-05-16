@@ -638,10 +638,9 @@ private fun RowScope.DoubleChip(
         }
         Text(text = chipText, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Color.White)
         if (isSelected && isFirstOfPair) {
-            val doubleDigit = slot.hour >= 10.0
             Text(
                 text = "▶",
-                fontSize = if (doubleDigit) 13.sp else 20.sp,
+                fontSize = 13.sp,
                 color = Color.White.copy(alpha = 0.85f),
                 modifier = Modifier.align(Alignment.CenterEnd).padding(end = 0.dp)
             )
