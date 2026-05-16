@@ -347,8 +347,8 @@ fun SlotBookingScreen(
                                 Box(
                                     modifier = Modifier
                                         .weight(2f)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .border(4.dp, Color.Black, RoundedCornerShape(12.dp))
+                                        .clip(RoundedCornerShape(0.dp))
+                                        .border(4.dp, Color.Black, RoundedCornerShape(0.dp))
                                         .padding(3.dp)
                                 ) {
                                     Row(
@@ -593,18 +593,14 @@ private fun RowScope.DoubleChip(
                 if (isFirstOfPair) {
                     // open right: top + left + bottom, no right vertical
                     path.moveTo(w, 0f)
-                    path.lineTo(r, 0f)
-                    path.arcTo(Rect(0f, 0f, 2f * r, 2f * r), 270f, -90f, false)
-                    path.lineTo(0f, h - r)
-                    path.arcTo(Rect(0f, h - 2f * r, 2f * r, h), 180f, -90f, false)
+                    path.lineTo(0f, 0f)
+                    path.lineTo(0f, h)
                     path.lineTo(w, h)
                 } else {
                     // open left: top + right + bottom, no left vertical
                     path.moveTo(0f, 0f)
-                    path.lineTo(w - r, 0f)
-                    path.arcTo(Rect(w - 2f * r, 0f, w, 2f * r), 270f, 90f, false)
-                    path.lineTo(w, h - r)
-                    path.arcTo(Rect(w - 2f * r, h - 2f * r, w, h), 0f, 90f, false)
+                    path.lineTo(w, 0f)
+                    path.lineTo(w, h)
                     path.lineTo(0f, h)
                 }
                 drawPath(path, Color.Black, style = Stroke(width = sw))
