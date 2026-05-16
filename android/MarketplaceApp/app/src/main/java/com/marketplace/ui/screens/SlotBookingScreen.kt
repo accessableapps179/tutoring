@@ -347,9 +347,9 @@ fun SlotBookingScreen(
                                 Box(
                                     modifier = Modifier
                                         .weight(2f)
+                                        .height(44.dp)
                                         .clip(RoundedCornerShape(0.dp))
                                         .border(4.dp, Color.Black, RoundedCornerShape(0.dp))
-                                        .padding(3.dp)
                                 ) {
                                     Row(
                                         horizontalArrangement = Arrangement.spacedBy(4.dp),
