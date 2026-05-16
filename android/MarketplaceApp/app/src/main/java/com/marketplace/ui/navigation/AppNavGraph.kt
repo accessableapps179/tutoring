@@ -276,7 +276,11 @@ fun AppNavGraph() {
                 teacherName = Session.pendingTeacherName,
                 studentName = Session.name,
                 onBackClick = rememberSingleClick { navController.popBackStack() },
-                onCalendarClick = { navController.navigate("month_calendar/$teacherId") },
+                onCalendarClick = {
+                    navController.navigate("month_calendar/$teacherId") {
+                        popUpTo("book_teacher/$teacherId") { inclusive = true }
+                    }
+                },
                 onBookingSuccess = {
                     Session.pendingContactId = ""
                     navController.navigate("booking_success") {
