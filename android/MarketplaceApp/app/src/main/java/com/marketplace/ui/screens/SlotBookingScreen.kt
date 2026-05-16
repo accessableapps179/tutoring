@@ -363,7 +363,7 @@ fun SlotBookingScreen(
                                         }
                                 ) {
                                     Row(
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(0.dp),
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         DoubleChipInner(
