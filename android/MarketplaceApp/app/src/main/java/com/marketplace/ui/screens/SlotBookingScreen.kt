@@ -152,7 +152,8 @@ fun SlotBookingScreen(
                             Icon(
                                 imageVector = Icons.Filled.CalendarMonth,
                                 contentDescription = "Month view",
-                                tint = MaterialTheme.colorScheme.onPrimary
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(32.dp)
                             )
                         }
                     }
