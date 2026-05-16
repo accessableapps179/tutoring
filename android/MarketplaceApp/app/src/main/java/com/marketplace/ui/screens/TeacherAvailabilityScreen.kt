@@ -317,7 +317,7 @@ fun TeacherAvailabilityScreen(
                 )
             } else {
                 val doubleFirstHours = teacherDaySlots
-                    .filter { it.bookedDuration >= 2 }
+                    .filter { it.bookedDuration >= 2 && it.status == "CONFIRMED" }
                     .map { it.hour }.toSet()
                 val doubleSecondHours = doubleFirstHours.map { it + 0.5 }.toSet()
                 val now = LocalDate.now()
@@ -398,7 +398,7 @@ fun RowScope.TeacherSlotChip(
 ) {
     val isTrialCompleted = slot.status == "TRIAL_COMPLETED_HAPPY" ||
             slot.status == "TRIAL_COMPLETED_UNHAPPY"
-    val isDouble = chipWeight >= 2f && (slot.status == "CONFIRMED" || slot.status == "PENDING")
+    val isDouble = chipWeight >= 2f && slot.status == "CONFIRMED"
 
     val bgColor by animateColorAsState(
         targetValue = when {
