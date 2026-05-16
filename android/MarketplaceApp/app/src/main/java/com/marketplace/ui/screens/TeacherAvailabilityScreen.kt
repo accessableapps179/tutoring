@@ -10,11 +10,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -48,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -58,6 +63,7 @@ import com.marketplace.viewmodel.BookingViewModel
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
@@ -118,7 +124,7 @@ fun TeacherAvailabilityScreen(
     val isLoading by availabilityViewModel.isLoading.collectAsState()
 
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    var weekOffset by remember { mutableStateOf(0) }
+    var displayMonth by remember { mutableStateOf(YearMonth.now()) }
     var pendingSlot by remember { mutableStateOf<TeacherSlotStatusDto?>(null) }
     var confirmedSlot by remember { mutableStateOf<TeacherSlotStatusDto?>(null) }
     var callInProgress by remember { mutableStateOf(false) }
@@ -127,14 +133,6 @@ fun TeacherAvailabilityScreen(
     val scope = rememberCoroutineScope()
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val today = LocalDate.now()
-
-    fun getWeekStart(offset: Int): LocalDate {
-        val monday = today.minusDays(today.dayOfWeek.value.toLong() - 1)
-        return monday.plusWeeks(offset.toLong())
-    }
-
-    val weekStart = getWeekStart(weekOffset)
-    val weekDays = (0..6).map { weekStart.plusDays(it.toLong()) }
 
     LaunchedEffect(selectedDate) {
         availabilityViewModel.loadTeacherDayView(selectedDate.format(dateFormatter))
@@ -296,99 +294,98 @@ fun TeacherAvailabilityScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            val calFirstDay    = displayMonth.atDay(1)
+            val calStartOffset = calFirstDay.dayOfWeek.value - 1
+            val calDaysInMonth = displayMonth.lengthOfMonth()
+            val calRows        = (calStartOffset + calDaysInMonth + 6) / 7
+            val monthLabel     = displayMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault()) +
+                    "  ${displayMonth.year}"
+
+            // ─── Month navigation ─────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = { if (weekOffset > 0) weekOffset-- },
-                    enabled = weekOffset > 0
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.ChevronLeft,
-                        contentDescription = "Previous week",
-                        tint = if (weekOffset > 0) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outline
-                    )
+                IconButton(onClick = { displayMonth = displayMonth.minusMonths(1) }) {
+                    Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous month")
                 }
-
-                Text(
-                    text = "${weekStart.format(DateTimeFormatter.ofPattern("d MMM"))} — " +
-                            "${weekStart.plusDays(6).format(DateTimeFormatter.ofPattern("d MMM yyyy"))}",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
-
-                IconButton(
-                    onClick = { if (weekOffset < 12) weekOffset++ },
-                    enabled = weekOffset < 12
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.ChevronRight,
-                        contentDescription = "Next week",
-                        tint = if (weekOffset < 12) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outline
-                    )
+                Text(text = monthLabel, fontWeight = FontWeight.Bold, fontSize = 24.sp)
+                IconButton(onClick = { displayMonth = displayMonth.plusMonths(1) }) {
+                    Icon(Icons.Filled.ChevronRight, contentDescription = "Next month")
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                weekDays.forEach { date ->
-                    val isSelected = date == selectedDate
-                    val isPast = date.isBefore(today)
-                    val dayName = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-                    val chipPagWeek = minOf(4, (date.dayOfMonth - 1) / 7 + 1)
-                    val isFirstOfPagWeek = date.dayOfMonth == 1 ||
-                        minOf(4, (date.dayOfMonth - 2) / 7 + 1) != chipPagWeek
+            Spacer(modifier = Modifier.height(8.dp))
 
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(0.dp))
-                            .background(
-                                when {
-                                    isSelected -> MaterialTheme.colorScheme.primary
-                                    isPast     -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                                    else       -> MaterialTheme.colorScheme.surfaceVariant
+            // ─── Day-of-week headers ──────────────────────────────────
+            Row(modifier = Modifier.fillMaxWidth()) {
+                listOf("M", "T", "W", "T", "F", "S", "S").forEach { d ->
+                    Text(
+                        text = d,
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = Color.Black
+                    )
+                }
+            }
+            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color.Black))
+
+            // ─── Calendar grid ────────────────────────────────────────
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp * calRows)
+            ) {
+                repeat(calRows) { rowIdx ->
+                    Row(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                        repeat(7) { colIdx ->
+                            val dayNum     = rowIdx * 7 + colIdx - calStartOffset + 1
+                            val validDay   = dayNum in 1..calDaysInMonth
+                            val calDate    = if (validDay) displayMonth.atDay(dayNum) else null
+                            val isPast     = calDate?.isBefore(today) == true
+                            val isToday    = calDate == today
+                            val isSelected = calDate == selectedDate
+
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .border(1.5.dp, Color(0xFFCCCCCC))
+                                    .then(
+                                        if (validDay && !isPast)
+                                            Modifier.clickable { selectedDate = calDate!! }
+                                        else Modifier
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (validDay) {
+                                    if (isSelected || isToday) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(CircleShape)
+                                                .background(
+                                                    if (isSelected) MaterialTheme.colorScheme.primary
+                                                    else Color.Black
+                                                )
+                                        )
+                                    }
+                                    Text(
+                                        text = dayNum.toString(),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 24.sp,
+                                        color = when {
+                                            isSelected || isToday -> Color.White
+                                            isPast -> Color(0xFFBBBBBB)
+                                            else   -> Color.Black
+                                        }
+                                    )
                                 }
-                            )
-                            .clickable(enabled = !isPast) { selectedDate = date }
-                            .padding(vertical = 8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = dayName.take(3),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = when {
-                                isSelected -> MaterialTheme.colorScheme.onPrimary
-                                isPast     -> MaterialTheme.colorScheme.outline
-                                else       -> MaterialTheme.colorScheme.onSurfaceVariant
                             }
-                        )
-                        Text(
-                            text = "${date.dayOfMonth}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = when {
-                                isSelected -> MaterialTheme.colorScheme.onPrimary
-                                isPast     -> MaterialTheme.colorScheme.outline
-                                else       -> MaterialTheme.colorScheme.onSurfaceVariant
-                            }
-                        )
-                        Text(
-                            text = if (isFirstOfPagWeek) "Wk$chipPagWeek" else "",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = if (isFirstOfPagWeek) FontWeight.Bold else FontWeight.Normal,
-                            color = when {
-                                isSelected          -> MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                                isFirstOfPagWeek    -> Color(0xFF1565C0)
-                                else                -> MaterialTheme.colorScheme.surface
-                            }
-                        )
+                        }
                     }
                 }
             }
