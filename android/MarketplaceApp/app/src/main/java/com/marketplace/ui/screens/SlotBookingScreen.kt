@@ -225,6 +225,61 @@ fun SlotBookingScreen(
                 fontWeight = FontWeight.Bold
             )
 
+            // Selection card — top of page, compact with inline confirm button
+            if (selectedSlot != null) {
+                val slot = selectedSlot!!
+                val durationMinutes = if (isDoubleMode) 50 else 25
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = formatLessonRange(slot.hour, durationMinutes),
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = selectedDateFormatted,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        )
+                    }
+                    Button(
+                        onClick = {
+                            if (!isBookingLoading) {
+                                bookingViewModel.createBooking(
+                                    teacherId    = teacherId,
+                                    studentName  = studentName,
+                                    message      = "Booking request",
+                                    slotDate     = slot.date,
+                                    slotHour     = slot.hour,
+                                    durationSlots = selectedDuration
+                                )
+                            }
+                        },
+                        enabled = !isBookingLoading
+                    ) {
+                        if (isBookingLoading) {
+                            CircularProgressIndicator(
+                                modifier    = Modifier.size(20.dp),
+                                color       = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Confirm", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        }
+                    }
+                }
+            }
+
             // Slot grid
             if (isLoading) {
                 Text(
@@ -396,71 +451,6 @@ fun SlotBookingScreen(
                 }
             }
 
-            // Selection summary
-            if (selectedSlot != null) {
-                val slot = selectedSlot!!
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val durationMinutes = if (isDoubleMode) 50 else 25
-                    Text(
-                        text = "Selected: ${formatLessonRange(slot.hour, durationMinutes)}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    if (isDoubleMode) {
-                        Text(
-                            text = formatSlotTime(slot.hour + 0.5),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
-                        )
-                    }
-                    Text(
-                        text = selectedDateFormatted,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    )
-                }
-
-                Button(
-                    onClick = {
-                        if (!isBookingLoading) {
-                            bookingViewModel.createBooking(
-                                teacherId = teacherId,
-                                studentName = studentName,
-                                message = "Booking request",
-                                slotDate = slot.date,
-                                slotHour = slot.hour,
-                                durationSlots = selectedDuration
-                            )
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isBookingLoading
-                ) {
-                    if (isBookingLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text(
-                            text = "Confirm Booking",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                }
-            }
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
