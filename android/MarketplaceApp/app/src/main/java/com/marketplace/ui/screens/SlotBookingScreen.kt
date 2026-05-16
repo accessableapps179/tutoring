@@ -636,30 +636,14 @@ private fun RowScope.DoubleChip(
             isSelected && pairedStartHour != null -> formatLessonEnd(pairedStartHour, 50)
             else -> formatSlotTime(slot.hour)
         }
+        Text(text = chipText, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Color.White)
         if (isSelected && isFirstOfPair) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(modifier = Modifier.width(20.dp))
-                Text(
-                    text = chipText,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp,
-                    color = Color.White,
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = "▶",
-                    fontSize = 20.sp,
-                    color = Color.White.copy(alpha = 0.85f),
-                    modifier = Modifier.width(20.dp),
-                    textAlign = TextAlign.End
-                )
-            }
-        } else {
-            Text(text = chipText, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Color.White)
+            Text(
+                text = "▶",
+                fontSize = 20.sp,
+                color = Color.White.copy(alpha = 0.85f),
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 0.dp)
+            )
         }
         if (isSelected && pairedStartHour != null && canStartDouble) {
             Text(
