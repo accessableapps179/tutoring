@@ -31,7 +31,8 @@ data class TeacherHourRange(
 data class AvailableSlot(
     val date: String,
     val hour: Double,
-    val isBooked: Boolean
+    val isBooked: Boolean,
+    val bookedDuration: Int = 1
 )
 
 @Serializable

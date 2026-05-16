@@ -204,12 +204,19 @@ class AvailabilityService(
             }
             .toSet()
 
-        val myBookedHoursWithThisTeacher = teacherBookings
+        val myBookingsWithThisTeacher = teacherBookings
             .filter { it.studentId == studentId }
+
+        val myBookedHoursWithThisTeacher = myBookingsWithThisTeacher
             .flatMap { b ->
                 if (b.durationSlots >= 2) listOf(b.slotHour, b.slotHour + 0.5)
                 else listOf(b.slotHour)
             }
+            .toSet()
+
+        val myDoubleBookingFirstHours = myBookingsWithThisTeacher
+            .filter { it.durationSlots >= 2 }
+            .map { it.slotHour }
             .toSet()
 
         return weeklySlots
@@ -220,7 +227,8 @@ class AvailabilityService(
                 AvailableSlot(
                     date = date,
                     hour = hour,
-                    isBooked = hour in myBookedHoursWithThisTeacher
+                    isBooked = hour in myBookedHoursWithThisTeacher,
+                    bookedDuration = if (hour in myDoubleBookingFirstHours) 2 else 1
                 )
             }
     }
