@@ -47,7 +47,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.Color
@@ -348,8 +350,17 @@ fun SlotBookingScreen(
                                     modifier = Modifier
                                         .weight(2f)
                                         .height(44.dp)
-                                        .clip(RoundedCornerShape(0.dp))
-                                        .border(4.dp, Color.Black, RoundedCornerShape(0.dp))
+                                        .drawWithContent {
+                                            drawContent()
+                                            val sw = 4.dp.toPx()
+                                            val half = sw / 2f
+                                            drawRect(
+                                                color = Color.Black,
+                                                topLeft = Offset(-half, -half),
+                                                size = Size(size.width + sw, size.height + sw),
+                                                style = Stroke(width = sw)
+                                            )
+                                        }
                                 ) {
                                     Row(
                                         horizontalArrangement = Arrangement.spacedBy(4.dp),
