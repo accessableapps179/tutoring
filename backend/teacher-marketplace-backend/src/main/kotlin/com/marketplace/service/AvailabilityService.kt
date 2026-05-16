@@ -9,6 +9,7 @@ import com.marketplace.domain.TeacherHourRange
 import com.marketplace.domain.WeeklySlot
 import com.marketplace.repository.AvailabilityRepository
 import com.marketplace.repository.BookingRepository
+import com.marketplace.repository.ContactRepository
 import com.marketplace.repository.TrialResultRepository
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -30,7 +31,8 @@ data class StampResult(val slotsWritten: Int, val conflicts: List<StampConflict>
 class AvailabilityService(
     private val availabilityRepository: AvailabilityRepository = AvailabilityRepository(),
     private val bookingRepository: BookingRepository = BookingRepository(),
-    private val trialResultRepository: TrialResultRepository = TrialResultRepository()
+    private val trialResultRepository: TrialResultRepository = TrialResultRepository(),
+    private val contactRepository: ContactRepository = ContactRepository()
 ) {
 
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -94,11 +96,14 @@ class AvailabilityService(
             .toSet()
 
         // Build hour→booking; only extend to the second slot for CONFIRMED doubles
-        // (PENDING = trial = always 1 slot regardless of durationSlots in DB)
+        // where a contact already exists (trial done = regular ongoing lesson).
+        // If no contact yet, it is still the trial lesson (always 25 min / 1 slot).
         val hourToBooking = mutableMapOf<Double, com.marketplace.domain.Booking>()
         for (b in bookings) {
             hourToBooking[b.slotHour] = b
-            if (b.durationSlots >= 2 && b.status == "CONFIRMED") hourToBooking[b.slotHour + 0.5] = b
+            val isRegularLesson = b.durationSlots >= 2 && b.status == "CONFIRMED" &&
+                    contactRepository.findByStudentAndTeacher(b.studentId, teacherId) != null
+            if (isRegularLesson) hourToBooking[b.slotHour + 0.5] = b
         }
 
         val result = mutableListOf<TeacherSlotStatus>()
@@ -109,7 +114,10 @@ class AvailabilityService(
             val isInSchedule = weeklySlots.contains(h)
             val trialResult  = booking?.let { trialResultsByBookingId[it.id] }
             val isFirstSlot  = booking != null && booking.slotHour == h
-            val bookedDuration = if (isFirstSlot && booking!!.durationSlots >= 2 && booking.status == "CONFIRMED") 2 else 1
+            val isRegularDouble = isFirstSlot && booking!!.durationSlots >= 2 &&
+                    booking.status == "CONFIRMED" &&
+                    contactRepository.findByStudentAndTeacher(booking.studentId, teacherId) != null
+            val bookedDuration = if (isRegularDouble) 2 else 1
 
             val status = when {
                 trialResult != null && trialResult.happy   -> "TRIAL_COMPLETED_HAPPY"
