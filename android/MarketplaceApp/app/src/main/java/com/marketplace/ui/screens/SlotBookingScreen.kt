@@ -64,6 +64,7 @@ import com.marketplace.Session
 import com.marketplace.dto.AvailableSlotDto
 import com.marketplace.viewmodel.AvailabilityViewModel
 import com.marketplace.viewmodel.BookingViewModel
+import com.marketplace.viewmodel.TrialResultViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -79,7 +80,8 @@ fun SlotBookingScreen(
     onBookingSuccess: () -> Unit,
     onCalendarClick: (() -> Unit)? = null,
     availabilityViewModel: AvailabilityViewModel = viewModel(),
-    bookingViewModel: BookingViewModel = viewModel()
+    bookingViewModel: BookingViewModel = viewModel(),
+    trialResultViewModel: TrialResultViewModel = viewModel()
 ) {
     val availableSlots by availabilityViewModel.availableSlots.collectAsState()
     val selectedSlot by availabilityViewModel.selectedSlot.collectAsState()
@@ -87,9 +89,11 @@ fun SlotBookingScreen(
     val bookingSuccess by bookingViewModel.bookingSuccess.collectAsState()
     val isBookingLoading by bookingViewModel.isLoading.collectAsState()
     val upcomingBookings by bookingViewModel.upcomingBookings.collectAsState()
+    val canBook by trialResultViewModel.canBook.collectAsState()
 
     val isPostTrial = Session.pendingContactId.isNotEmpty()
-    val hasExistingTrialBooking = !isPostTrial && upcomingBookings.any { it.teacherId == teacherId }
+    // Blocked if: a pending/confirmed future trial exists, OR a trial result was already submitted
+    val hasExistingTrialBooking = !isPostTrial && (!canBook || upcomingBookings.any { it.teacherId == teacherId })
     var selectedDuration by remember { mutableStateOf(if (isPostTrial) 2 else 1) }
 
     var selectedDate by remember { mutableStateOf(Session.pendingBookingDate ?: LocalDate.now()) }
@@ -101,7 +105,10 @@ fun SlotBookingScreen(
         availabilityViewModel.clearSelectedSlot()
         availabilityViewModel.loadHourRange(teacherId)
         availabilityViewModel.loadSlotsForDate(teacherId, selectedDate.format(dateFormatter))
-        if (!isPostTrial) bookingViewModel.loadUpcomingBookings()
+        if (!isPostTrial) {
+            bookingViewModel.loadUpcomingBookings()
+            trialResultViewModel.checkCanBook(teacherId)
+        }
     }
 
     LaunchedEffect(selectedDate) {
