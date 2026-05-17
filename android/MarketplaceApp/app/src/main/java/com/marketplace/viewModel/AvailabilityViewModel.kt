@@ -42,8 +42,9 @@ class AvailabilityViewModel : ViewModel() {
     val endHour: StateFlow<Int> = _endHour
 
     // Month availability summary for student booking calendar
-    private val _monthAvailability = MutableStateFlow<List<DayAvailabilityDto>>(emptyList())
-    val monthAvailability: StateFlow<List<DayAvailabilityDto>> = _monthAvailability
+    // null = still loading (renders all days grey); non-null = data ready
+    private val _monthAvailability = MutableStateFlow<List<DayAvailabilityDto>?>(null)
+    val monthAvailability: StateFlow<List<DayAvailabilityDto>?> = _monthAvailability
 
     // PAG coverage: weekNumber → set of dayOfWeek values that have at least one slot
     private val _pagCoverage = MutableStateFlow<Map<Int, Set<Int>>>(emptyMap())
@@ -149,6 +150,7 @@ class AvailabilityViewModel : ViewModel() {
     }
 
     fun loadMonthAvailability(teacherId: String, year: Int, month: Int) {
+        _monthAvailability.value = null  // reset to loading state immediately
         viewModelScope.launch {
             repository.getMonthAvailability(teacherId, year, month).onSuccess {
                 _monthAvailability.value = it
