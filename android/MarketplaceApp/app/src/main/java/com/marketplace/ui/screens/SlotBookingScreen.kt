@@ -86,8 +86,10 @@ fun SlotBookingScreen(
     val isLoading by availabilityViewModel.isLoading.collectAsState()
     val bookingSuccess by bookingViewModel.bookingSuccess.collectAsState()
     val isBookingLoading by bookingViewModel.isLoading.collectAsState()
+    val upcomingBookings by bookingViewModel.upcomingBookings.collectAsState()
 
     val isPostTrial = Session.pendingContactId.isNotEmpty()
+    val hasExistingTrialBooking = !isPostTrial && upcomingBookings.any { it.teacherId == teacherId }
     var selectedDuration by remember { mutableStateOf(if (isPostTrial) 2 else 1) }
 
     var selectedDate by remember { mutableStateOf(Session.pendingBookingDate ?: LocalDate.now()) }
@@ -99,6 +101,7 @@ fun SlotBookingScreen(
         availabilityViewModel.clearSelectedSlot()
         availabilityViewModel.loadHourRange(teacherId)
         availabilityViewModel.loadSlotsForDate(teacherId, selectedDate.format(dateFormatter))
+        if (!isPostTrial) bookingViewModel.loadUpcomingBookings()
     }
 
     LaunchedEffect(selectedDate) {
@@ -210,14 +213,23 @@ fun SlotBookingScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .background(
+                            if (hasExistingTrialBooking) MaterialTheme.colorScheme.surfaceVariant
+                            else MaterialTheme.colorScheme.primaryContainer
+                        )
                         .padding(vertical = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Book a trial lesson  ·  25 min",
+                        text = if (hasExistingTrialBooking)
+                            "You have a trial lesson booked with this tutor"
+                        else
+                            "Book a trial lesson  ·  25 min",
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = if (hasExistingTrialBooking) MaterialTheme.colorScheme.outline
+                                else MaterialTheme.colorScheme.onPrimaryContainer,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 12.dp)
                     )
                 }
             } else {
@@ -322,7 +334,7 @@ fun SlotBookingScreen(
                                 )
                             }
                         },
-                        enabled = !isBookingLoading
+                        enabled = !isBookingLoading && !hasExistingTrialBooking
                     ) {
                         if (isBookingLoading) {
                             CircularProgressIndicator(
