@@ -172,7 +172,9 @@ fun Application.trialResultRoutes() {
                         "Missing teacher ID", status = HttpStatusCode.BadRequest
                     )
                     val existingResult = trialResultRepository.findByStudentAndTeacher(studentId, teacherId)
-                    call.respond(mapOf("canBook" to (existingResult == null)))
+                    val existingBooking = bookingRepository.findByStudentId(studentId)
+                        .any { it.teacherId == teacherId && it.status != "CANCELLED" }
+                    call.respond(mapOf("canBook" to (existingResult == null && !existingBooking)))
                 }
             }
         }

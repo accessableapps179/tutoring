@@ -29,9 +29,9 @@ class TrialResultViewModel : ViewModel() {
     private val _contactId = MutableStateFlow("")
     val contactId: StateFlow<String> = _contactId
 
-    // Whether student can book this teacher
-    private val _canBook = MutableStateFlow(true)
-    val canBook: StateFlow<Boolean> = _canBook
+    // null = check in flight; true/false = server answer
+    private val _canBook = MutableStateFlow<Boolean?>(null)
+    val canBook: StateFlow<Boolean?> = _canBook
 
     // Whether student has already done a trial with this teacher
     private val _hasTrialResult = MutableStateFlow(false)
@@ -62,11 +62,10 @@ class TrialResultViewModel : ViewModel() {
     }
 
     fun checkCanBook(teacherId: String) {
+        _canBook.value = null  // mark as in-flight
         viewModelScope.launch {
             val result = repository.canBook(teacherId)
-            if (result.isSuccess) {
-                _canBook.value = result.getOrNull()?.canBook ?: true
-            }
+            _canBook.value = result.getOrNull()?.canBook ?: true
         }
     }
 

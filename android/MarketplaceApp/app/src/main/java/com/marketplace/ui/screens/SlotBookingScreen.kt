@@ -92,8 +92,8 @@ fun SlotBookingScreen(
     val canBook by trialResultViewModel.canBook.collectAsState()
 
     val isPostTrial = Session.pendingContactId.isNotEmpty()
-    // Blocked if: a pending/confirmed future trial exists, OR a trial result was already submitted
-    val hasExistingTrialBooking = !isPostTrial && (!canBook || upcomingBookings.any { it.teacherId == teacherId })
+    // null = check still in flight → treat as blocked until server responds
+    val hasExistingTrialBooking = !isPostTrial && (canBook != true)
     var selectedDuration by remember { mutableStateOf(if (isPostTrial) 2 else 1) }
 
     var selectedDate by remember { mutableStateOf(Session.pendingBookingDate ?: LocalDate.now()) }
@@ -105,10 +105,7 @@ fun SlotBookingScreen(
         availabilityViewModel.clearSelectedSlot()
         availabilityViewModel.loadHourRange(teacherId)
         availabilityViewModel.loadSlotsForDate(teacherId, selectedDate.format(dateFormatter))
-        if (!isPostTrial) {
-            bookingViewModel.loadUpcomingBookings()
-            trialResultViewModel.checkCanBook(teacherId)
-        }
+        if (!isPostTrial) trialResultViewModel.checkCanBook(teacherId)
     }
 
     LaunchedEffect(selectedDate) {
