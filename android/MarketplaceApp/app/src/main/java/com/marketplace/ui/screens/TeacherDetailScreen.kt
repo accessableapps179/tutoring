@@ -268,7 +268,7 @@ fun TeacherDetailScreen(
 
                         // Book button — only shown if no trial result with this teacher yet
                         when {
-                            !canBook -> {
+                            canBook == false -> {
                                 Text(
                                     text = "You have already had a trial lesson with $teacherName.",
                                     style = MaterialTheme.typography.bodyMedium,
