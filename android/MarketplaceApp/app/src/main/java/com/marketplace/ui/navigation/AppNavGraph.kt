@@ -532,7 +532,9 @@ fun AppNavGraph() {
                 teacherName            = teacherName,
                 onHappyContactUnlocked = {
                     Session.pendingTeacherName = teacherName
-                    navController.navigate("post_trial/$teacherId")
+                    navController.navigate("post_trial/$teacherId") {
+                        popUpTo("trial_result/$bookingId/$teacherId") { inclusive = true }
+                    }
                 },
                 onNotHappy             = {
                     Session.lastSearchResults = Session.lastSearchResults.filter { it.id != teacherId }
