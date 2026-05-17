@@ -40,6 +40,9 @@ data class TeacherSlotStatusResponse(
 )
 
 @Serializable
+data class DayAvailabilityResponse(val date: String, val hasSingle: Boolean, val hasDouble: Boolean)
+
+@Serializable
 data class TogglePlatonicSlotRequest(
     val weekNumber: Int,
     val dayOfWeek: Int,
@@ -96,6 +99,24 @@ fun Application.availabilityRoutes() {
                 )
                 val slots = availabilityService.getAvailableSlotsForDate(teacherId, date, studentId)
                 call.respond(slots)
+            }
+
+            get("/availability/{teacherId}/month/{year}/{month}") {
+                val principal = call.principal<JWTPrincipal>()
+                val studentId = principal?.payload?.subject ?: return@get call.respondText(
+                    "Unauthorized", status = HttpStatusCode.Unauthorized
+                )
+                val teacherId = call.parameters["teacherId"] ?: return@get call.respondText(
+                    "Missing teacher ID", status = HttpStatusCode.BadRequest
+                )
+                val year  = call.parameters["year"]?.toIntOrNull()  ?: return@get call.respondText(
+                    "Missing year", status = HttpStatusCode.BadRequest
+                )
+                val month = call.parameters["month"]?.toIntOrNull() ?: return@get call.respondText(
+                    "Missing month", status = HttpStatusCode.BadRequest
+                )
+                val summary = availabilityService.getAvailableMonthSummary(teacherId, year, month, studentId)
+                call.respond(summary.map { DayAvailabilityResponse(it.date, it.hasSingle, it.hasDouble) })
             }
         }
 

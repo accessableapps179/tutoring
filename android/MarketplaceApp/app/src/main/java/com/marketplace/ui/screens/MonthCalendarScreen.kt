@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,10 +54,17 @@ fun MonthCalendarScreen(
     teacherName: String,
     title: String? = null,
     onBackClick: () -> Unit,
-    onDateSelected: (LocalDate) -> Unit
+    onDateSelected: (LocalDate) -> Unit,
+    // null = no restriction (teacher view); non-null = student booking: only listed dates are active
+    availableDates: Set<LocalDate>? = null,
+    onMonthChanged: ((year: Int, month: Int) -> Unit)? = null
 ) {
     val today = LocalDate.now()
     var displayMonth by remember { mutableStateOf(YearMonth.now()) }
+
+    LaunchedEffect(displayMonth) {
+        onMonthChanged?.invoke(displayMonth.year, displayMonth.monthValue)
+    }
 
     val firstDay    = displayMonth.atDay(1)
     val startOffset = firstDay.dayOfWeek.value - 1  // Mon=0 … Sun=6
@@ -136,10 +144,12 @@ fun MonthCalendarScreen(
                 Row(modifier = Modifier.fillMaxWidth().weight(1f)) {
                     repeat(7) { colIdx ->
                         val dayNum    = rowIdx * 7 + colIdx - startOffset + 1
-                        val validDay  = dayNum in 1..daysInMonth
-                        val date      = if (validDay) displayMonth.atDay(dayNum) else null
-                        val isPast    = date?.isBefore(today) == true
-                        val isToday   = date == today
+                        val validDay    = dayNum in 1..daysInMonth
+                        val date        = if (validDay) displayMonth.atDay(dayNum) else null
+                        val isPast      = date?.isBefore(today) == true
+                        val isToday     = date == today
+                        val noSlots     = availableDates != null && date != null && !isPast && date !in availableDates
+                        val disabled    = !validDay || isPast || noSlots
 
                         Box(
                             modifier = Modifier
@@ -147,7 +157,7 @@ fun MonthCalendarScreen(
                                 .fillMaxHeight()
                                 .border(1.5.dp, Color(0xFFCCCCCC))
                                 .then(
-                                    if (validDay && !isPast)
+                                    if (!disabled)
                                         Modifier.clickable { onDateSelected(date!!) }
                                     else Modifier
                                 ),
@@ -167,9 +177,10 @@ fun MonthCalendarScreen(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 24.sp,
                                     color = when {
-                                        isToday -> Color.White
-                                        isPast  -> Color(0xFFBBBBBB)
-                                        else    -> Color.Black
+                                        isToday && noSlots  -> Color(0xFFBBBBBB)
+                                        isToday             -> Color.White
+                                        isPast || noSlots   -> Color(0xFFBBBBBB)
+                                        else                -> Color.Black
                                     }
                                 )
                             }

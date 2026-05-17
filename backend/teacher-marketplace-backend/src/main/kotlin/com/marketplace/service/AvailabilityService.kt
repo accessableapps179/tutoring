@@ -253,6 +253,32 @@ class AvailabilityService(
             }
     }
 
+    // ─── Month summary ───────────────────────────────────────
+
+    data class DayAvailability(val date: String, val hasSingle: Boolean, val hasDouble: Boolean)
+
+    fun getAvailableMonthSummary(
+        teacherId: String,
+        year: Int,
+        month: Int,
+        studentId: String
+    ): List<DayAvailability> {
+        val today = LocalDate.now()
+        val firstDay = LocalDate.of(year, month, 1)
+        val lastDay  = firstDay.withDayOfMonth(firstDay.lengthOfMonth())
+        return generateSequence(firstDay) { it.plusDays(1) }
+            .takeWhile { !it.isAfter(lastDay) }
+            .filter { !it.isBefore(today) }
+            .map { date ->
+                val slots = getAvailableSlotsForDate(teacherId, date.format(dateFormatter), studentId)
+                val freeHours = slots.filter { !it.isBooked }.map { it.hour }.toSet()
+                val hasSingle = freeHours.isNotEmpty()
+                val hasDouble = freeHours.any { h -> (h + 0.5) in freeHours }
+                DayAvailability(date.format(dateFormatter), hasSingle, hasDouble)
+            }
+            .toList()
+    }
+
     // ─── Hour Range ──────────────────────────────────────────
 
     fun getHourRange(teacherId: String): TeacherHourRange {

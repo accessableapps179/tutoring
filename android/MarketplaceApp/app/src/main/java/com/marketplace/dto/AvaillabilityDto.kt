@@ -83,6 +83,9 @@ data class StampMonthRequest(
 )
 
 @Serializable
+data class DayAvailabilityDto(val date: String, val hasSingle: Boolean, val hasDouble: Boolean)
+
+@Serializable
 data class StampConflictDto(val date: String, val hour: Double)
 
 @Serializable

@@ -5,6 +5,7 @@ package com.marketplace.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.marketplace.dto.AvailableSlotDto
+import com.marketplace.dto.DayAvailabilityDto
 import com.marketplace.dto.PlatonicSlotDto
 import com.marketplace.dto.TeacherSlotStatusDto
 import com.marketplace.dto.WeeklySlotDto
@@ -39,6 +40,10 @@ class AvailabilityViewModel : ViewModel() {
 
     private val _endHour = MutableStateFlow(22)
     val endHour: StateFlow<Int> = _endHour
+
+    // Month availability summary for student booking calendar
+    private val _monthAvailability = MutableStateFlow<List<DayAvailabilityDto>>(emptyList())
+    val monthAvailability: StateFlow<List<DayAvailabilityDto>> = _monthAvailability
 
     // PAG coverage: weekNumber → set of dayOfWeek values that have at least one slot
     private val _pagCoverage = MutableStateFlow<Map<Int, Set<Int>>>(emptyMap())
@@ -139,6 +144,14 @@ class AvailabilityViewModel : ViewModel() {
                 _startHour.value = startHour
                 _endHour.value = endHour
                 loadWeeklySlots()
+            }
+        }
+    }
+
+    fun loadMonthAvailability(teacherId: String, year: Int, month: Int) {
+        viewModelScope.launch {
+            repository.getMonthAvailability(teacherId, year, month).onSuccess {
+                _monthAvailability.value = it
             }
         }
     }

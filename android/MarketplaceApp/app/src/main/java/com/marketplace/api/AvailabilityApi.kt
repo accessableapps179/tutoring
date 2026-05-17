@@ -1,6 +1,7 @@
 package com.marketplace.api
 
 import com.marketplace.dto.AvailableSlotDto
+import com.marketplace.dto.DayAvailabilityDto
 import com.marketplace.dto.HourRangeRequest
 import com.marketplace.dto.PlatonicSlotDto
 import com.marketplace.dto.StampMonthRequest
@@ -25,6 +26,13 @@ interface AvailabilityApi {
         @Path("teacherId") teacherId: String,
         @Path("date") date: String
     ): List<AvailableSlotDto>
+
+    @GET("availability/{teacherId}/month/{year}/{month}")
+    suspend fun getMonthAvailability(
+        @Path("teacherId") teacherId: String,
+        @Path("year") year: Int,
+        @Path("month") month: Int
+    ): List<DayAvailabilityDto>
 
     @GET("availability/{teacherId}/hour-range")
     suspend fun getHourRange(

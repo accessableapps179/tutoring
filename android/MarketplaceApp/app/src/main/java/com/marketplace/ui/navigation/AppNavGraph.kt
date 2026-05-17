@@ -2,6 +2,8 @@
 package com.marketplace.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -39,7 +41,9 @@ import com.marketplace.ui.screens.TeacherProfileScreen
 import com.marketplace.ui.screens.TrialResultScreen
 import com.marketplace.ui.screens.VideoCallScreen
 import com.marketplace.viewmodel.AuthViewModel
+import com.marketplace.viewmodel.AvailabilityViewModel
 import com.marketplace.viewmodel.MessageViewModel
+import java.time.LocalDate
 
 @Composable
 fun AppNavGraph() {
@@ -220,7 +224,7 @@ fun AppNavGraph() {
             MonthCalendarScreen(
                 teacherName    = Session.name,
                 title          = "My Calendar",
-                onBackClick    = { navController.popBackStack() },
+                onBackClick    = rememberSingleClick { navController.popBackStack() },
                 onDateSelected = { date ->
                     Session.pendingAvailabilityDate = date
                     navController.navigate("teacher_availability/$userId")
@@ -270,12 +274,26 @@ fun AppNavGraph() {
                 navController.popBackStack()
                 return@composable
             }
+            val availabilityViewModel: AvailabilityViewModel = viewModel()
+            val monthAvailability by availabilityViewModel.monthAvailability.collectAsState()
+
+            val availableDates: Set<LocalDate>? = if (monthAvailability.isEmpty()) null else {
+                monthAvailability
+                    .filter { it.hasSingle }
+                    .map { LocalDate.parse(it.date) }
+                    .toSet()
+            }
+
             MonthCalendarScreen(
                 teacherName    = Session.pendingTeacherName,
-                onBackClick    = { navController.popBackStack() },
+                onBackClick    = rememberSingleClick { navController.popBackStack() },
                 onDateSelected = { date ->
                     Session.pendingBookingDate = date
                     navController.navigate("book_teacher/$teacherId")
+                },
+                availableDates = availableDates,
+                onMonthChanged = { year, month ->
+                    availabilityViewModel.loadMonthAvailability(teacherId, year, month)
                 }
             )
         }

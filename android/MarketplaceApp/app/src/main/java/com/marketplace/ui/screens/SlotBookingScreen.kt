@@ -88,7 +88,7 @@ fun SlotBookingScreen(
     val isBookingLoading by bookingViewModel.isLoading.collectAsState()
 
     val isPostTrial = Session.pendingContactId.isNotEmpty()
-    var selectedDuration by remember { mutableStateOf(2) }
+    var selectedDuration by remember { mutableStateOf(if (isPostTrial) 2 else 1) }
 
     var selectedDate by remember { mutableStateOf(Session.pendingBookingDate ?: LocalDate.now()) }
 
@@ -105,12 +105,28 @@ fun SlotBookingScreen(
         availabilityViewModel.loadSlotsForDate(teacherId, selectedDate.format(dateFormatter))
     }
 
+    // Rule 1: if post-trial double mode but no consecutive free pair exists, fall back to single
+    LaunchedEffect(availableSlots) {
+        if (isPostTrial && selectedDuration == 2 && availableSlots.isNotEmpty()) {
+            val freeHours = availableSlots.filter { !it.isBooked }.map { it.hour }.toSet()
+            if (freeHours.none { h -> (h + 0.5) in freeHours }) {
+                selectedDuration = 1
+                availabilityViewModel.clearSelectedSlot()
+            }
+        }
+    }
+
     if (bookingSuccess) {
         LaunchedEffect(Unit) {
             bookingViewModel.resetBookingSuccess()
             onBookingSuccess()
         }
     }
+
+    // Optimistic while loading so the button doesn't flash disabled on entry
+    val hasDoubleSlots = if (isLoading || availableSlots.isEmpty()) true
+    else availableSlots.filter { !it.isBooked }.map { it.hour }.toSet()
+        .let { free -> free.any { h -> (h + 0.5) in free } }
 
     val isDoubleMode = isPostTrial && selectedDuration == 2
 
@@ -200,21 +216,29 @@ fun SlotBookingScreen(
                         modifier = Modifier
                             .weight(1f)
                             .background(
-                                if (selectedDuration == 2) MaterialTheme.colorScheme.primary
-                                else Color.Transparent
+                                when {
+                                    !hasDoubleSlots       -> MaterialTheme.colorScheme.surfaceVariant
+                                    selectedDuration == 2 -> MaterialTheme.colorScheme.primary
+                                    else                  -> Color.Transparent
+                                }
                             )
-                            .clickable {
-                                selectedDuration = 2
-                                availabilityViewModel.clearSelectedSlot()
-                            }
+                            .then(
+                                if (hasDoubleSlots) Modifier.clickable {
+                                    selectedDuration = 2
+                                    availabilityViewModel.clearSelectedSlot()
+                                } else Modifier
+                            )
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "50 min",
                             fontWeight = FontWeight.Bold,
-                            color = if (selectedDuration == 2) MaterialTheme.colorScheme.onPrimary
-                                    else MaterialTheme.colorScheme.onSurface
+                            color = when {
+                                !hasDoubleSlots       -> MaterialTheme.colorScheme.outline
+                                selectedDuration == 2 -> MaterialTheme.colorScheme.onPrimary
+                                else                  -> MaterialTheme.colorScheme.onSurface
+                            }
                         )
                     }
                     Box(

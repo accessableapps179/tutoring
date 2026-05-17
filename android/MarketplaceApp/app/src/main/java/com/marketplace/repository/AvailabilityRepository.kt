@@ -2,6 +2,7 @@ package com.marketplace.repository
 
 import com.marketplace.api.RetrofitClient
 import com.marketplace.dto.AvailableSlotDto
+import com.marketplace.dto.DayAvailabilityDto
 import com.marketplace.dto.HourRangeRequest
 import com.marketplace.dto.PlatonicSlotDto
 import com.marketplace.dto.StampMonthRequest
@@ -25,6 +26,18 @@ class AvailabilityRepository {
         return try {
             val slots = api.getAvailableSlotsForDate(teacherId, date)
             Result.success(slots)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getMonthAvailability(
+        teacherId: String,
+        year: Int,
+        month: Int
+    ): Result<List<DayAvailabilityDto>> {
+        return try {
+            Result.success(api.getMonthAvailability(teacherId, year, month))
         } catch (e: Exception) {
             Result.failure(e)
         }
