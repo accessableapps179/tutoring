@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,7 +58,8 @@ fun MonthCalendarScreen(
     onDateSelected: (LocalDate) -> Unit,
     // null = no restriction (teacher view); non-null = student booking: only listed dates are active
     availableDates: Set<LocalDate>? = null,
-    onMonthChanged: ((year: Int, month: Int) -> Unit)? = null
+    onMonthChanged: ((year: Int, month: Int) -> Unit)? = null,
+    isAvailabilityLoading: Boolean = false
 ) {
     val today = LocalDate.now()
     var displayMonth by remember { mutableStateOf(YearMonth.now()) }
@@ -137,6 +139,12 @@ fun MonthCalendarScreen(
 
             // Top border
             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color.Black))
+
+            if (isAvailabilityLoading) {
+                Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else
 
             // ─── Calendar grid — fills remaining screen height ────────────────
             Column(modifier = Modifier.fillMaxWidth().weight(1f)) {

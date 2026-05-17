@@ -277,22 +277,21 @@ fun AppNavGraph() {
             val availabilityViewModel: AvailabilityViewModel = viewModel()
             val monthAvailability by availabilityViewModel.monthAvailability.collectAsState()
 
-            // null = loading → emptySet greys all days; loaded → only days with slots are active
-            val availableDates: Set<LocalDate> = monthAvailability
+            val availableDates: Set<LocalDate>? = monthAvailability
                 ?.filter { it.hasSingle }
                 ?.map { LocalDate.parse(it.date) }
                 ?.toSet()
-                ?: emptySet()
 
             MonthCalendarScreen(
-                teacherName    = Session.pendingTeacherName,
-                onBackClick    = rememberSingleClick { navController.popBackStack() },
-                onDateSelected = { date ->
+                teacherName           = Session.pendingTeacherName,
+                onBackClick           = rememberSingleClick { navController.popBackStack() },
+                onDateSelected        = { date ->
                     Session.pendingBookingDate = date
                     navController.navigate("book_teacher/$teacherId")
                 },
-                availableDates = availableDates,
-                onMonthChanged = { year, month ->
+                availableDates        = availableDates,
+                isAvailabilityLoading = monthAvailability == null,
+                onMonthChanged        = { year, month ->
                     availabilityViewModel.loadMonthAvailability(teacherId, year, month)
                 }
             )
