@@ -156,7 +156,7 @@ fun MonthCalendarScreen(
                         val date        = if (validDay) displayMonth.atDay(dayNum) else null
                         val isPast      = date?.isBefore(today) == true
                         val isToday     = date == today
-                        val noSlots     = availableDates != null && date != null && !isPast && date !in availableDates
+                        val noSlots     = availableDates != null && date != null && !isPast && !isToday && date !in availableDates
                         val disabled    = !validDay || isPast || noSlots
 
                         Box(
