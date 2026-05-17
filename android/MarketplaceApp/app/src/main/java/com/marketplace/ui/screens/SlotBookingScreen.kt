@@ -167,7 +167,7 @@ fun SlotBookingScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Book with $teacherName", fontWeight = FontWeight.Bold) },
+                title = { Text(text = if (isPostTrial) "Book with $teacherName" else "Trial · $teacherName", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -204,8 +204,23 @@ fun SlotBookingScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Duration toggle — only for repeat (post-trial) bookings
-            if (isPostTrial) {
+            // Duration toggle for repeat bookings; fixed label for trials
+            if (!isPostTrial) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Book a trial lesson  ·  25 min",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            } else {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
