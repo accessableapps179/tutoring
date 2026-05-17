@@ -272,7 +272,7 @@ class AvailabilityService(
             .map { date ->
                 val slots = getAvailableSlotsForDate(teacherId, date.format(dateFormatter), studentId)
                 val freeHours = slots.filter { !it.isBooked }.map { it.hour }.toSet()
-                val hasSingle = freeHours.isNotEmpty()
+                val hasSingle = slots.isNotEmpty()   // includes student's own booked slot so the day stays tappable
                 val hasDouble = freeHours.any { h -> (h + 0.5) in freeHours }
                 DayAvailability(date.format(dateFormatter), hasSingle, hasDouble)
             }
