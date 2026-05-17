@@ -263,12 +263,10 @@ class AvailabilityService(
         month: Int,
         studentId: String
     ): List<DayAvailability> {
-        val today = LocalDate.now()
         val firstDay = LocalDate.of(year, month, 1)
         val lastDay  = firstDay.withDayOfMonth(firstDay.lengthOfMonth())
         return generateSequence(firstDay) { it.plusDays(1) }
             .takeWhile { !it.isAfter(lastDay) }
-            .filter { !it.isBefore(today) }
             .map { date ->
                 val slots = getAvailableSlotsForDate(teacherId, date.format(dateFormatter), studentId)
                 val freeHours = slots.filter { !it.isBooked }.map { it.hour }.toSet()
