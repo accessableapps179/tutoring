@@ -177,7 +177,7 @@ fun MonthCalendarScreen(
                                         modifier = Modifier
                                             .size(42.dp)
                                             .clip(CircleShape)
-                                            .background(Color.Black)
+                                            .background(if (noSlots) Color(0xFFCCCCCC) else Color.Black)
                                     )
                                 }
                                 Text(
@@ -185,7 +185,7 @@ fun MonthCalendarScreen(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 24.sp,
                                     color = when {
-                                        isToday && noSlots  -> Color(0xFFBBBBBB)
+                                        isToday && noSlots  -> Color(0xFF666666)
                                         isToday             -> Color.White
                                         isPast || noSlots   -> Color(0xFFBBBBBB)
                                         else                -> Color.Black
